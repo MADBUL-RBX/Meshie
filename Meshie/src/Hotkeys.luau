@@ -5,10 +5,12 @@ local UserConfig = require(script.Parent.UserConfig)
 local Hotkeys = {}
 
 local inputConnection = nil
-local keyToToolState = {}
+local keyToToolState  = {}
+local keyToGeoMode    = {}
 
 local function rebuildBindings()
 	keyToToolState = {}
+	keyToGeoMode   = {}
 
 	for toolStateName, hotkey in pairs(UserConfig.ToolHotkeys) do
 		if typeof(hotkey) == "string" and hotkey ~= "" then
@@ -18,9 +20,18 @@ local function rebuildBindings()
 			end
 		end
 	end
+
+	for modeName, hotkey in pairs(UserConfig.GeometryModeHotkeys) do
+		if typeof(hotkey) == "string" and hotkey ~= "" then
+			local keyCode = Enum.KeyCode[hotkey]
+			if keyCode then
+				keyToGeoMode[keyCode] = modeName
+			end
+		end
+	end
 end
 
-function Hotkeys.Start(isEnabledCallback, setToolStateCallback)
+function Hotkeys.Start(isEnabledCallback, setToolStateCallback, setGeometryModeCallback)
 	rebuildBindings()
 
 	if inputConnection then
@@ -47,6 +58,12 @@ function Hotkeys.Start(isEnabledCallback, setToolStateCallback)
 		local toolStateName = keyToToolState[input.KeyCode]
 		if toolStateName then
 			setToolStateCallback(toolStateName)
+			return
+		end
+
+		local modeName = keyToGeoMode[input.KeyCode]
+		if modeName and setGeometryModeCallback then
+			setGeometryModeCallback(modeName)
 		end
 	end)
 end

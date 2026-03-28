@@ -336,21 +336,12 @@ local function enable(_p, button)
 	Hud.SetUploadActionCallback(function()
 		Hud.SetStatus("Upload unavailable\nuntil CreateAssetAsync() supports\nCreator Store plugins.")
 	end)
-	Hud.SetDebugHighlightActionCallback(function()
-		UserConfig.DebugHighlight = not UserConfig.DebugHighlight
-		Hud.SetDebugHighlight(UserConfig.DebugHighlight)
-		if session then
-			syncScene()
-		end
-		refreshHud()
-	end)
-	Hud.SetDebugHighlight(UserConfig.DebugHighlight)
 	Hud.SetVisible(true)
 
 	selectionConn = Selection.SelectionChanged:Connect(onSelectionChanged)
 	Hotkeys.Start(function()
 		return enabled
-	end, activateToolState)
+	end, activateToolState, setGeometryMode)
 	refreshHud()
 end
 

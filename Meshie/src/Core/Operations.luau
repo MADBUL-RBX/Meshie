@@ -166,26 +166,27 @@ end
 
 -- ─── Extrude ──────────────────────────────────────────────────────────────────
 
--- Extrude a face: the original face BECOMES the cap (no internal duplicate).
--- New base vertices are created at the same positions as the original.
--- Side quads connect the base ring to the cap (original face verts).
+-- Extrude a face outward.
+-- Original face verts stay as the BASE ring (still connected to surrounding mesh).
+-- New cap verts are created at the same positions and dragged outward by the tool.
+-- Side quads connect the base ring to the cap ring.
+-- No bottom face is added — the existing mesh topology is the base.
 -- Returns { capFace, capVerts, baseVerts, sideFaces } or nil.
 function Operations.extrudeFace(bm, face)
-	local capVerts = BMesh.faceVerts(face) -- original face verts become the cap
-	local n = #capVerts
+	local baseVerts = BMesh.faceVerts(face) -- original verts stay connected to mesh
+	local n = #baseVerts
 	local style = { Color = face.color, Transparency = face.transparency }
 
-	-- Create new base verts at the same positions
-	local baseVerts = {}
-	for _, v in ipairs(capVerts) do
-		baseVerts[#baseVerts + 1] = BMesh.addVert(bm, v.position)
+	-- Create new cap verts at the same positions — these get dragged outward
+	local capVerts = {}
+	for _, v in ipairs(baseVerts) do
+		capVerts[#capVerts + 1] = BMesh.addVert(bm, v.position)
 	end
 
-	-- Remove the original face — we'll re-add it as the cap
-	-- (its verts stay, they become the cap ring)
+	-- Remove the original face (baseVerts remain connected to surrounding mesh edges)
 	BMesh.removeFace(bm, face)
 
-	-- Create side quads: base[i] → base[i+1] → cap[i+1] → cap[i]
+	-- Side quads: base[i] → base[i+1] → cap[i+1] → cap[i]
 	local sideFaces = {}
 	for i = 1, n do
 		local b1 = baseVerts[i]
@@ -195,16 +196,8 @@ function Operations.extrudeFace(bm, face)
 		sideFaces[#sideFaces + 1] = BMesh.addFace(bm, { b1, b2, c2, c1 }, style)
 	end
 
-	-- Re-add the cap face (same verts as original, same winding)
+	-- Cap face — new verts, same winding as original face
 	local capFace = BMesh.addFace(bm, capVerts, style)
-
-	-- Add the base face to close the bottom
-	-- Reverse winding so normal points inward/downward
-	local baseVertsReversed = {}
-	for i = n, 1, -1 do
-		baseVertsReversed[#baseVertsReversed + 1] = baseVerts[i]
-	end
-	BMesh.addFace(bm, baseVertsReversed, style)
 
 	return {
 		capFace = capFace,

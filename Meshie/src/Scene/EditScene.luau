@@ -77,12 +77,6 @@ local function buildFaceProxy(worldPoints)
 end
 
 local function applyFaceStyle(proxy, face, sourceMaterial)
-	if UserConfig.DebugHighlight then
-		proxy.Material = UserConfig.FaceMaterial
-		proxy.Transparency = 0.4
-		proxy.Color = UserConfig.FaceColor
-		return
-	end
 	proxy.Material = sourceMaterial or UserConfig.FaceMaterial
 	proxy.Color = face.color
 	proxy.Transparency = face.transparency

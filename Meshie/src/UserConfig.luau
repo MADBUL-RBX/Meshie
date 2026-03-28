@@ -1,7 +1,5 @@
 local UserConfig = {}
 
-UserConfig.DebugHighlight = false
-
 UserConfig.VertexSize    = 0.2
 UserConfig.EdgeThickness = 0.08
 
@@ -18,6 +16,12 @@ UserConfig.ToolHotkeys = {
 	Extrude   = "X",
 	Bevel     = "C",
 	Dissolve  = "V",
+}
+
+UserConfig.GeometryModeHotkeys = {
+	Vertex = "LeftBracket",
+	Edge   = "RightBracket",
+	Face   = "BackSlash",
 }
 
 UserConfig.BevelTargetVertexColor = Color3.fromRGB(255, 130, 130)

@@ -1,4 +1,254 @@
 {
   "name": "game",
-  "className": "DataModel"
+  "className": "DataModel",
+  "children": [
+    {
+      "name": "ServerScriptService",
+      "className": "ServerScriptService",
+      "pluginManaged": true,
+      "children": [
+        {
+          "name": "MPE_ROOT_LINK",
+          "className": "Folder",
+          "pluginManaged": true,
+          "children": [
+            {
+              "name": "Meshie",
+              "className": "Folder",
+              "pluginManaged": true,
+              "children": [
+                {
+                  "name": "src",
+                  "className": "Folder",
+                  "pluginManaged": true,
+                  "children": [
+                    {
+                      "name": "Core",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "BMesh",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/BMesh.luau"
+                          ]
+                        },
+                        {
+                          "name": "MeshIO",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/MeshIO.luau"
+                          ]
+                        },
+                        {
+                          "name": "MeshSession",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/MeshSession.luau"
+                          ]
+                        },
+                        {
+                          "name": "Operations",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/Operations.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "History",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/History.luau"
+                      ]
+                    },
+                    {
+                      "name": "Hotkeys",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Hotkeys.luau"
+                      ]
+                    },
+                    {
+                      "name": "Listen",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Listen.luau"
+                      ]
+                    },
+                    {
+                      "name": "MPE",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/MPE.luau"
+                      ]
+                    },
+                    {
+                      "name": "PluginMain",
+                      "className": "Script",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/PluginMain.plugin.luau"
+                      ]
+                    },
+                    {
+                      "name": "Scene",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "EditScene",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/EditScene.luau"
+                          ]
+                        },
+                        {
+                          "name": "GeometryMode",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/GeometryMode.luau"
+                          ]
+                        },
+                        {
+                          "name": "HandleManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/HandleManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "SelectionManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/SelectionManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "ToolHandles",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/ToolHandles.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Tools",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "Bevel",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Tools/Bevel.luau"
+                          ]
+                        },
+                        {
+                          "name": "Dissolve",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Tools/Dissolve.luau"
+                          ]
+                        },
+                        {
+                          "name": "Extrude",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Tools/Extrude.luau"
+                          ]
+                        },
+                        {
+                          "name": "Transform",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Tools/Transform.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "UI",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "Factory",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/Factory.luau"
+                          ]
+                        },
+                        {
+                          "name": "Hud",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/Hud.luau"
+                          ]
+                        },
+                        {
+                          "name": "NoticePanel",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/NoticePanel.luau"
+                          ]
+                        },
+                        {
+                          "name": "UIConfig",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/UIConfig.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "UserConfig",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UserConfig.luau"
+                      ]
+                    },
+                    {
+                      "name": "Version",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Version.luau"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

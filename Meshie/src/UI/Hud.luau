@@ -20,7 +20,6 @@ local geometryButtons     = {}   -- keyed by mode name
 local mainButton           = nil
 local uploadButton         = nil
 local settingsButton       = nil
-local debugHighlightButton = nil
 
 local titleLabel    = nil
 local modeLabel     = nil
@@ -34,7 +33,6 @@ local toolButtons = {}
 local onMainAction           = nil
 local onToolState            = nil
 local onUploadAction         = nil
-local onDebugHighlightAction = nil
 local onOperatorCommit       = nil
 local onOperatorCancel       = nil
 local onGeometryMode         = nil
@@ -235,13 +233,6 @@ function Hud.Start()
 		UDim2.new(0, UIConfig.Padding, 0, 8),
 		topPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
-	debugHighlightButton = Factory.MakeButton("DebugHighlightButton", "Debug Highlight: Off",
-		UDim2.new(1, -(UIConfig.Padding * 2), 0, UIConfig.DebugToggleButtonHeight),
-		UDim2.new(0, UIConfig.Padding, 0, 22),
-		topPanel)
-	debugHighlightButton.Activated:Connect(function()
-		if onDebugHighlightAction then onDebugHighlightAction() end
-	end)
 
 	-- ─── Geometry mode panel ──────────────────────────────────────────────────
 	geometryPanel = Factory.MakePanel("GeometryPanel",
@@ -256,6 +247,7 @@ function Hud.Start()
 		geometryPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
 	local modeNames = { "Vertex", "Edge", "Face" }
+	local modeHotkeyLabel = { Vertex = "[", Edge = "]", Face = "\\" }
 	local btnWidth  = (UIConfig.FaceModePanelWidth - UIConfig.Padding * 2 - 4) / 3
 	geometryButtons = {}
 
@@ -268,6 +260,20 @@ function Hud.Start()
 		btn.Activated:Connect(function()
 			if onGeometryMode then onGeometryMode(modeName) end
 		end)
+		Factory.Create("TextLabel", {
+			Name = "HotkeyLabel",
+			AnchorPoint = Vector2.new(1, 1),
+			Position = UDim2.new(1, -4, 1, -3),
+			Size = UDim2.new(0, 16, 0, 12),
+			BackgroundTransparency = 1,
+			Text = modeHotkeyLabel[modeName] or "",
+			TextColor3 = UIConfig.SubTextColor,
+			Font = UIConfig.Font,
+			TextSize = UIConfig.TextSizeSmall,
+			TextXAlignment = Enum.TextXAlignment.Right,
+			TextYAlignment = Enum.TextYAlignment.Bottom,
+			Parent = btn,
+		})
 		geometryButtons[modeName] = btn
 	end
 
@@ -449,13 +455,8 @@ function Hud.SetGeometryModeCallback(callback) onGeometryMode = callback end
 function Hud.SetMainActionCallback(callback)       onMainAction = callback end
 function Hud.SetToolStateCallback(callback)        onToolState = callback end
 function Hud.SetUploadActionCallback(callback)     onUploadAction = callback end
-function Hud.SetDebugHighlightActionCallback(cb)   onDebugHighlightAction = cb end
 function Hud.SetOperatorCommitCallback(callback)   onOperatorCommit = callback end
 function Hud.SetOperatorCancelCallback(callback)   onOperatorCancel = callback end
-
-function Hud.SetDebugHighlight(isEnabled)
-	setToggleButtonActive(debugHighlightButton, isEnabled, "Debug Highlight: On", "Debug Highlight: Off")
-end
 
 function Hud.SetToolStates(items, activeName)
 	clearToolButtons()
@@ -489,7 +490,8 @@ function Hud.Destroy()
 	settingsTogglePanel = nil; settingsPanel = nil; toolRail = nil
 	geometryPanel = nil; geometryButtons = {}
 	mainButton = nil; uploadButton = nil; settingsButton = nil
-	debugHighlightButton = nil; titleLabel = nil; modeLabel = nil
+	titleLabel = nil
+	modeLabel = nil
 	verticesLabel = nil; facesLabel = nil; toolLabel = nil; noteLabel = nil
 	toolButtons = {}
 end
