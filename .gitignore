@@ -1,0 +1,16 @@
+# Roblox Studio place files
+*.rbxl
+*.rbxlx
+
+# Rojo project files (if used)
+*.project.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+
+# Claude Code internal project instructions
+CLAUDE.md

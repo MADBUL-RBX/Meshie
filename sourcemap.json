@@ -1,0 +1,254 @@
+{
+  "name": "game",
+  "className": "DataModel",
+  "children": [
+    {
+      "name": "ServerScriptService",
+      "className": "ServerScriptService",
+      "pluginManaged": true,
+      "children": [
+        {
+          "name": "MPE_ROOT_LINK",
+          "className": "Folder",
+          "pluginManaged": true,
+          "children": [
+            {
+              "name": "MeshPartEditPlugin",
+              "className": "Folder",
+              "pluginManaged": true,
+              "children": [
+                {
+                  "name": "MeshPartEdit",
+                  "className": "Folder",
+                  "pluginManaged": true,
+                  "children": [
+                    {
+                      "name": "Hotkeys",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Hotkeys.luau"
+                      ]
+                    },
+                    {
+                      "name": "Listen",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Listen.luau"
+                      ]
+                    },
+                    {
+                      "name": "MPE",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/MPE.luau"
+                      ]
+                    },
+                    {
+                      "name": "PluginMain",
+                      "className": "Script",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/PluginMain.plugin.luau"
+                      ]
+                    },
+                    {
+                      "name": "UserConfig",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/UserConfig.luau"
+                      ]
+                    },
+                    {
+                      "name": "Core",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "BMesh",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Core/BMesh.luau"
+                          ]
+                        },
+                        {
+                          "name": "MeshIO",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Core/MeshIO.luau"
+                          ]
+                        },
+                        {
+                          "name": "MeshSession",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Core/MeshSession.luau"
+                          ]
+                        },
+                        {
+                          "name": "Operations",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Core/Operations.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Scene",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "EditScene",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Scene/EditScene.luau"
+                          ]
+                        },
+                        {
+                          "name": "GeometryMode",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Scene/GeometryMode.luau"
+                          ]
+                        },
+                        {
+                          "name": "HandleManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Scene/HandleManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "SelectionManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Scene/SelectionManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "ToolHandles",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Scene/ToolHandles.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Tools",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "Bevel",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Tools/Bevel.luau"
+                          ]
+                        },
+                        {
+                          "name": "Dissolve",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Tools/Dissolve.luau"
+                          ]
+                        },
+                        {
+                          "name": "Extrude",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Tools/Extrude.luau"
+                          ]
+                        },
+                        {
+                          "name": "Transform",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Tools/Transform.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "UI",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "Factory",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/UI/Factory.luau"
+                          ]
+                        },
+                        {
+                          "name": "Hud",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/UI/Hud.luau"
+                          ]
+                        },
+                        {
+                          "name": "UIConfig",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/UI/UIConfig.luau"
+                          ]
+                        },
+                        {
+                          "name": "NoticePanel",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/UI/NoticePanel.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "History",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/History.luau"
+                      ]
+                    },
+                    {
+                      "name": "Version",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/MeshPartEditPlugin/MeshPartEdit/Version.luau"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
