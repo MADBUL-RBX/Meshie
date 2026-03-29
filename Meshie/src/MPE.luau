@@ -32,7 +32,6 @@ local SELECT_MODE = "Select"
 local session = nil -- active MeshSession object; non-nil iff in session
 local enabled = false
 local activeToolState = SELECT_MODE
-local selectionConn = nil
 local undoConn = nil
 local redoConn = nil
 local toolbarButton = nil
@@ -162,6 +161,17 @@ local function activateToolState(name)
 	if not toolstates[name] then
 		return
 	end
+
+	-- Snapshot Studio's current selection before HandleManager.Arm clobbers it.
+	SelectionManager.Clear()
+	for _, inst in ipairs(Selection:Get()) do
+		if inst:GetAttribute("IsToolHandle") then continue end
+		local pt = inst:GetAttribute("ProxyType")
+		if not pt then continue end
+		if pt ~= GeometryMode.Get() then continue end
+		SelectionManager.Add(inst)
+	end
+
 	if not SelectionManager.HasSelection() then
 		return
 	end
@@ -243,38 +253,6 @@ local function onHandleChanged(handle, oldCF, oldSz, newCF, newSz)
 		syncScene()
 		refreshHud()
 	end
-end
-
--- ─── Selection ────────────────────────────────────────────────────────────────
-
-local function onSelectionChanged()
-	if not session then
-		return
-	end
-	if activeToolState ~= SELECT_MODE then
-		return
-	end
-
-	local sel = Selection:Get()
-	if #sel == 0 then
-		return
-	end
-
-	for _, inst in ipairs(sel) do
-		if inst:GetAttribute("IsToolHandle") then
-			continue
-		end
-		local pt = inst:GetAttribute("ProxyType")
-		if not pt then
-			continue
-		end
-		if pt ~= GeometryMode.Get() then
-			continue
-		end
-		SelectionManager.Add(inst)
-	end
-
-	refreshHud()
 end
 
 -- ─── Session lifecycle ────────────────────────────────────────────────────────
@@ -366,7 +344,6 @@ local function enable(_p, button)
 	end)
 	Hud.SetVisible(true)
 
-	selectionConn = Selection.SelectionChanged:Connect(onSelectionChanged)
 	Hotkeys.Start(function()
 		return enabled
 	end, activateToolState, setGeometryMode)
@@ -386,11 +363,6 @@ local function disable()
 		redoConn:Disconnect()
 		redoConn = nil
 	end
-	if selectionConn then
-		selectionConn:Disconnect()
-		selectionConn = nil
-	end
-
 	disconnectAutoCommit()
 	Hotkeys.Destroy()
 	HandleManager.Clear()
