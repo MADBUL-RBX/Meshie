@@ -22,38 +22,20 @@ function ToolHandles.Destroy()
 	if folder then folder:Destroy(); folder = nil end
 end
 
-function ToolHandles.CreateHandle(name, cframe, size, color, material)
-	if not folder then return nil end
-	local h = Instance.new("Part")
-	h.Name        = name
-	h.Shape       = Enum.PartType.Block
-	h.Size        = size
-	h.Material    = material
-	h.Color       = color
-	h.Anchored    = true
-	h.CanCollide  = false
-	h.CanTouch    = false
-	h.CFrame      = cframe
-	h:SetAttribute("IsToolHandle", true)
-	h.Archivable = false
-	h.Parent = folder
-	return h
-end
-
-function ToolHandles.CloneProxyHandle(proxy, handleName)
+function ToolHandles.CreateHandle(proxy, handleName)
 	if not folder or not proxy then return nil end
-	local h = Instance.new("Part")
-	h.Name        = handleName or (proxy.Name .. "Handle")
-	h.Size        = proxy.Size
-	h.CFrame      = proxy.CFrame
-	h.Color       = proxy.Color
-	h.Material    = proxy.Material
-	h.Anchored    = true
-	h.CanCollide  = false
-	h.CanTouch    = false
-	h.Archivable  = false
+	proxy.Archivable = true
+	local h = proxy:Clone()
+	proxy.Archivable = false
+	if not h then return nil end
+	h.Name         = handleName or (proxy.Name .. "Handle")
+	h.Transparency = 1
+	h.Anchored     = true
+	h.CanCollide   = false
+	h.CanTouch     = false
+	h.Archivable   = false
 	h:SetAttribute("IsToolHandle", true)
-	h.Parent = folder
+	h.Parent       = folder
 	return h
 end
 

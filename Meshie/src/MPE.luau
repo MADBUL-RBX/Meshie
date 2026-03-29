@@ -66,9 +66,12 @@ local function syncScene()
 	if not session then
 		return
 	end
-	EditScene.RebuildProxies(session.bm, function(p)
-		return session:LocalToWorld(p)
-	end, session.sourceMeshPart.Material)
+	EditScene.RebuildProxies(
+		session.bm,
+		function(p) return session:LocalToWorld(p) end,
+		function(d) return session.sourceMeshPart.CFrame:VectorToWorldSpace(d) end,
+		session.sourceMeshPart.Material
+	)
 	EditScene.ApplyGeometryMode(GeometryMode.Get())
 end
 

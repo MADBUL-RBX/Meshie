@@ -290,4 +290,34 @@ function BMesh.removeOrphanedVerts(bm)
 	end
 end
 
+-- ─── Normal cache ─────────────────────────────────────────────────────────────
+
+-- Compute and store normals/tangents on all BMesh elements (local space).
+-- Sets face.normal, vert.normal, edge.normal, edge.tangent.
+-- Call before RebuildProxies so proxies can stamp these as attributes.
+function BMesh.computeNormals(bm)
+	-- Face normals first — used by vert and edge normals below.
+	for _, face in pairs(bm.faces) do
+		face.normal = BMesh.faceNormal(face)
+	end
+	-- Vertex normals: average of adjacent face normals.
+	for _, vert in pairs(bm.verts) do
+		local sum = Vector3.zero
+		for _, f in ipairs(BMesh.vertFaces(vert)) do
+			sum += f.normal
+		end
+		vert.normal = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
+	end
+	-- Edge normals and tangents.
+	for _, edge in pairs(bm.edges) do
+		local sum = Vector3.zero
+		for _, f in ipairs(BMesh.edgeFaces(edge)) do
+			sum += f.normal
+		end
+		edge.normal  = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
+		local dir    = edge.v2.position - edge.v1.position
+		edge.tangent = if dir.Magnitude > 1e-5 then dir.Unit else Vector3.new(1, 0, 0)
+	end
+end
+
 return BMesh

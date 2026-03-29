@@ -15,20 +15,9 @@ local onChanged = nil
 
 local function copyProxyAttributes(proxy, handle)
 	handle:SetAttribute("IsToolHandle", true)
-	handle:SetAttribute("ToolHandleType", proxy:GetAttribute("ProxyType") or "")
-	local n = proxy:GetAttribute("VertCount") or 0
-	handle:SetAttribute("VertCount", n)
-	for _, attr in ipairs({ "ProxyType", "VertId", "EdgeId", "FaceId" }) do
-		local v = proxy:GetAttribute(attr)
-		if v ~= nil then
-			handle:SetAttribute(attr, v)
-		end
-	end
-	for i = 1, n do
-		local v = proxy:GetAttribute("VertId" .. i)
-		if v ~= nil then
-			handle:SetAttribute("VertId" .. i, v)
-		end
+	-- Copy all proxy attributes wholesale so normals, tangents, IDs all transfer.
+	for attr, value in pairs(proxy:GetAttributes()) do
+		handle:SetAttribute(attr, value)
 	end
 end
 
@@ -40,7 +29,7 @@ end
 function HandleManager.Arm(proxy)
 	HandleManager.Clear()
 
-	local handle = ToolHandles.CloneProxyHandle(proxy, proxy.Name .. "Handle")
+	local handle = ToolHandles.CreateHandle(proxy, proxy.Name .. "Handle")
 	if not handle then
 		return nil
 	end

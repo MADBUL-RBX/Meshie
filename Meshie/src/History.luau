@@ -32,7 +32,7 @@ function History.Begin(session)
 	print("[History] Begin — snapshot ok:", ok)
 	if ok and content ~= nil then
 		local tempPart = AssetService:CreateMeshPartAsync(content)
-		session.sourceMeshPart:ApplyMesh(tempPart)
+		session:ApplyMeshUpdate(tempPart)
 	end
 	CHS:ResetWaypoints()
 	undoStack = {}
@@ -71,7 +71,7 @@ function History.Commit(session)
 	end
 	if ok and content ~= nil then
 		local tempPart = AssetService:CreateMeshPartAsync(content)
-		session.sourceMeshPart:ApplyMesh(tempPart)
+		session:ApplyMeshUpdate(tempPart)
 	end
 
 	if activeId then

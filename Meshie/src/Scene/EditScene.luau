@@ -65,7 +65,7 @@ local function buildFaceProxy(worldPoints)
 	if not ok then
 		warn("[EditScene] buildFaceProxy failed:", err)
 		em = nil
-		return nil, nil
+		return nil, nil, nil
 	end
 
 	facePart.Anchored = true
@@ -73,7 +73,20 @@ local function buildFaceProxy(worldPoints)
 	facePart.CanTouch = false
 	facePart.Archivable = false
 	facePart.CFrame = CFrame.fromMatrix(center, xAxis, yAxis, zAxis)
-	return facePart, em
+	return facePart, em, normal  -- normal is world-space
+end
+
+-- Build a CFrame with UpVector = up, back axis as close to tangent as possible.
+-- Used for edge and vertex proxies so the Studio gizmo shows the operation axis.
+local function orientedCFrame(pos, up, tangent)
+	local right = up:Cross(tangent)
+	if right.Magnitude < 1e-5 then
+		local alt = math.abs(up:Dot(Vector3.new(1, 0, 0))) < 0.9 and Vector3.new(1, 0, 0) or Vector3.new(0, 0, 1)
+		right = up:Cross(alt)
+	end
+	right = right.Unit
+	local back = right:Cross(up)
+	return CFrame.fromMatrix(pos, right, up, back)
 end
 
 local function applyFaceStyle(proxy, face, sourceMaterial)
@@ -96,7 +109,7 @@ end
 
 -- ─── Private proxy builders ───────────────────────────────────────────────────
 
-local function rebuildVertexProxy(vert, localToWorld)
+local function rebuildVertexProxy(vert, localToWorld, localDirToWorld)
 	if not vertexFolder then
 		return
 	end
@@ -105,6 +118,9 @@ local function rebuildVertexProxy(vert, localToWorld)
 	if existing then
 		existing.Parent = nil
 	end
+
+	local worldPos    = localToWorld(vert.position)
+	local worldNormal = localDirToWorld(vert.normal or Vector3.new(0, 1, 0))
 
 	local p = Instance.new("Part")
 	p.Shape = Enum.PartType.Ball
@@ -116,13 +132,16 @@ local function rebuildVertexProxy(vert, localToWorld)
 	p.CanTouch = false
 	p.Archivable = false
 	p.Name = name
-	p.Position = localToWorld(vert.position)
+	p.CFrame = orientedCFrame(worldPos, worldNormal, Vector3.new(1, 0, 0))
 	p:SetAttribute("ProxyType", "Vertex")
 	p:SetAttribute("VertId", vert.id)
+	p:SetAttribute("NormalX", worldNormal.X)
+	p:SetAttribute("NormalY", worldNormal.Y)
+	p:SetAttribute("NormalZ", worldNormal.Z)
 	p.Parent = vertexFolder
 end
 
-local function rebuildEdgeProxy(edge, localToWorld)
+local function rebuildEdgeProxy(edge, localToWorld, localDirToWorld)
 	if not edgeFolder then
 		return
 	end
@@ -140,6 +159,9 @@ local function rebuildEdgeProxy(edge, localToWorld)
 		return
 	end
 
+	local worldNormal  = localDirToWorld(edge.normal  or Vector3.new(0, 1, 0))
+	local worldTangent = localDirToWorld(edge.tangent or dir.Unit)
+
 	local p = Instance.new("Part")
 	p.Shape = Enum.PartType.Block
 	p.Material = UserConfig.EdgeMaterial
@@ -150,11 +172,24 @@ local function rebuildEdgeProxy(edge, localToWorld)
 	p.CanTouch = false
 	p.Archivable = false
 	p.Name = name
-	p.CFrame = CFrame.lookAlong((wA + wB) * 0.5, dir.Unit)
+	-- Use actual world edge direction (not localDirToWorld tangent) so the proxy
+	-- spans correctly regardless of scale. Fall back to a safe up if parallel.
+	local lookDir = dir.Unit
+	local upVec   = worldNormal
+	if math.abs(lookDir:Dot(upVec)) > 0.99 then
+		upVec = math.abs(lookDir:Dot(Vector3.new(0, 1, 0))) < 0.9 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
+	end
+	p.CFrame = CFrame.lookAlong((wA + wB) * 0.5, lookDir, upVec)
 	p:SetAttribute("ProxyType", "Edge")
 	p:SetAttribute("EdgeId", edge.id)
 	p:SetAttribute("VertId1", edge.v1.id)
 	p:SetAttribute("VertId2", edge.v2.id)
+	p:SetAttribute("NormalX", worldNormal.X)
+	p:SetAttribute("NormalY", worldNormal.Y)
+	p:SetAttribute("NormalZ", worldNormal.Z)
+	p:SetAttribute("TangentX", worldTangent.X)
+	p:SetAttribute("TangentY", worldTangent.Y)
+	p:SetAttribute("TangentZ", worldTangent.Z)
 	p.Parent = edgeFolder
 end
 
@@ -174,7 +209,7 @@ local function rebuildFaceProxy(face, localToWorld, sourceMaterial)
 		return
 	end
 
-	local proxy, em = buildFaceProxy(worldPts)
+	local proxy, em, worldNormal = buildFaceProxy(worldPts)
 	if not proxy then
 		return
 	end
@@ -187,6 +222,11 @@ local function rebuildFaceProxy(face, localToWorld, sourceMaterial)
 	proxy:SetAttribute("VertCount", n)
 	for i, v in ipairs(faceVerts) do
 		proxy:SetAttribute("VertId" .. i, v.id)
+	end
+	if worldNormal then
+		proxy:SetAttribute("NormalX", worldNormal.X)
+		proxy:SetAttribute("NormalY", worldNormal.Y)
+		proxy:SetAttribute("NormalZ", worldNormal.Z)
 	end
 	proxy.Parent = faceFolder
 	faceEditableMeshes[key] = em
@@ -215,12 +255,15 @@ function EditScene.FindProxy(name)
 end
 
 -- Destroy and recreate all proxy Parts from bm.
--- localToWorld: (Vector3) → Vector3, maps mesh-local positions to world space.
--- sourceMaterial: Enum.Material for face proxies (from session.sourceMeshPart.Material).
-function EditScene.RebuildProxies(bm, localToWorld, sourceMaterial)
+-- localToWorld:    (Vector3) → Vector3, maps mesh-local positions to world space.
+-- localDirToWorld: (Vector3) → Vector3, maps mesh-local directions (normals) to world space (rotation only, no scale).
+-- sourceMaterial:  Enum.Material for face proxies.
+function EditScene.RebuildProxies(bm, localToWorld, localDirToWorld, sourceMaterial)
 	if not root or not bm then
 		return
 	end
+
+	BMesh.computeNormals(bm)
 
 	for _, p in ipairs(vertexFolder:GetChildren()) do
 		p.Parent = nil
@@ -234,10 +277,10 @@ function EditScene.RebuildProxies(bm, localToWorld, sourceMaterial)
 	faceEditableMeshes = {}
 
 	for _, vert in pairs(bm.verts) do
-		rebuildVertexProxy(vert, localToWorld)
+		rebuildVertexProxy(vert, localToWorld, localDirToWorld)
 	end
 	for _, edge in pairs(bm.edges) do
-		rebuildEdgeProxy(edge, localToWorld)
+		rebuildEdgeProxy(edge, localToWorld, localDirToWorld)
 	end
 	for _, face in pairs(bm.faces) do
 		rebuildFaceProxy(face, localToWorld, sourceMaterial)

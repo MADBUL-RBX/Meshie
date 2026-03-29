@@ -96,24 +96,23 @@ Session.__index = Session
 
 -- ─── Lifecycle ────────────────────────────────────────────────────────────────
 
--- Bake physics/collision and apply the final mesh to sourceMeshPart.
+-- Apply a baked MeshPart to sourceMeshPart, preserving the current Size/MeshSize ratio.
+function Session:ApplyMeshUpdate(tempPart)
+	if not self.sourceMeshPart or not tempPart then return end
+	local oldScale = self.sourceMeshPart.Size / self.sourceMeshPart.MeshSize
+	self.sourceMeshPart:ApplyMesh(tempPart)
+	self.sourceMeshPart.Size = tempPart.MeshSize * oldScale
+end
+
+-- Finalize: sync face colors, serialize topology, restore source.
+-- No ApplyMesh needed — History.Commit already keeps MeshContent current.
 function Session:Finalize()
 	if not self.em or not self.sourceMeshPart then
 		return
 	end
 
-	-- Sync BMesh → EM so face colors painted on proxies are baked into the mesh.
+	-- Sync BMesh → EM so face colors painted on proxies are baked in.
 	rebuildEM(self)
-
-	local tempPart = nil
-	local ok, err = pcall(function()
-		tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
-	end)
-	if not ok then
-		warn("[MeshSession] Finalize failed:", err)
-		restoreSource(self)
-		return
-	end
 
 	-- Persist N-gon face topology so re-editing reconstructs BMesh correctly.
 	local topoJson = MeshIO.serializeTopology(self.bm)
@@ -127,10 +126,7 @@ function Session:Finalize()
 		sv.Parent = self.sourceMeshPart
 	end
 
-	local oldScale = self.sourceMeshPart.Size / self.sourceMeshPart.MeshSize
 	restoreSource(self)
-	self.sourceMeshPart:ApplyMesh(tempPart)
-	self.sourceMeshPart.Size = tempPart.MeshSize * oldScale
 end
 
 -- End the session. Restores sourceMeshPart and nils all state.

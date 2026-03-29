@@ -24,7 +24,7 @@ function Operations.cloneBMesh(bm)
 
 	-- Clone verts with original IDs
 	for id, v in pairs(bm.verts) do
-		c.verts[id] = { id = id, position = v.position, loop = nil }
+		c.verts[id] = { id = id, position = v.position, loop = nil, normal = v.normal }
 	end
 
 	-- Clone faces by walking original face loops, rebuilding with cloned verts
@@ -42,7 +42,8 @@ function Operations.cloneBMesh(bm)
 		})
 		-- Fix ID: remove from wrong slot, re-insert with original ID
 		c.faces[newFace.id] = nil
-		newFace.id = face.id
+		newFace.id     = face.id
+		newFace.normal = face.normal
 		c.faces[face.id] = newFace
 	end
 	-- Fix _nextFaceId since we manually reassigned IDs
@@ -73,6 +74,11 @@ function Operations.cloneBMesh(bm)
 	end
 	for origId, e in pairs(fixedEdges) do
 		c.edges[origId] = e
+		local orig = bm.edges[origId]
+		if orig then
+			e.normal  = orig.normal
+			e.tangent = orig.tangent
+		end
 	end
 	c._nextEdgeId = bm._nextEdgeId
 
