@@ -24,8 +24,11 @@
                   "children": [
                     {
                       "name": "Core",
-                      "className": "Folder",
+                      "className": "ModuleScript",
                       "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/init.luau"
+                      ],
                       "children": [
                         {
                           "name": "BMesh",
@@ -41,14 +44,6 @@
                           "pluginManaged": true,
                           "filePaths": [
                             "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/MeshIO.luau"
-                          ]
-                        },
-                        {
-                          "name": "MeshSession",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/MeshSession.luau"
                           ]
                         },
                         {
@@ -95,17 +90,12 @@
                     },
                     {
                       "name": "Scene",
-                      "className": "Folder",
+                      "className": "ModuleScript",
                       "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/init.luau"
+                      ],
                       "children": [
-                        {
-                          "name": "EditScene",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Scene/EditScene.luau"
-                          ]
-                        },
                         {
                           "name": "GeometryMode",
                           "className": "ModuleScript",
@@ -181,8 +171,11 @@
                     },
                     {
                       "name": "UI",
-                      "className": "Folder",
+                      "className": "ModuleScript",
                       "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/init.luau"
+                      ],
                       "children": [
                         {
                           "name": "Factory",
@@ -190,14 +183,6 @@
                           "pluginManaged": true,
                           "filePaths": [
                             "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/Factory.luau"
-                          ]
-                        },
-                        {
-                          "name": "Hud",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/UI/Hud.luau"
                           ]
                         },
                         {

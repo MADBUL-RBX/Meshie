@@ -1,3 +1,4 @@
+local Core             = require(script.Parent.Parent.Core)
 local BMesh            = require(script.Parent.Parent.Core.BMesh)
 local SelectionManager = require(script.Parent.Parent.Scene.SelectionManager)
 
@@ -6,29 +7,29 @@ local Transform = {}
 local startPos   = nil
 local savedVerts = nil  -- { { vert = v, initialPos = v.position } }
 
-function Transform.Activate(session, handle)
+function Transform.Activate(handle)
 	startPos   = handle.CFrame.Position
 	savedVerts = {}
 	local seen = {}
 
 	local function addVert(v)
 		if v and not seen[v.id] then
-			seen[v.id]               = true
+			seen[v.id]                  = true
 			savedVerts[#savedVerts + 1] = { vert = v, initialPos = v.position }
 		end
 	end
 
 	for _, entry in ipairs(SelectionManager.GetAll()) do
 		if entry.proxyType == "Vertex" then
-			addVert(session.bm.verts[entry.id])
+			addVert(Core.bm.verts[entry.id])
 		elseif entry.proxyType == "Edge" then
-			local e = session.bm.edges[entry.id]
+			local e = Core.bm.edges[entry.id]
 			if e then
 				addVert(e.v1)
 				addVert(e.v2)
 			end
 		elseif entry.proxyType == "Face" then
-			local f = session.bm.faces[entry.id]
+			local f = Core.bm.faces[entry.id]
 			if f then
 				for _, v in ipairs(BMesh.faceVerts(f)) do
 					addVert(v)
@@ -38,17 +39,17 @@ function Transform.Activate(session, handle)
 	end
 end
 
-function Transform.Commit(_session)
+function Transform.Commit()
 	startPos   = nil
 	savedVerts = nil
 end
 
-function Transform.Cancel(session)
-	if savedVerts and session.bm and session.em then
+function Transform.Cancel()
+	if savedVerts and Core.bm and Core.em then
 		for _, entry in ipairs(savedVerts) do
 			entry.vert.position = entry.initialPos
 			if entry.vert.emId then
-				session.em:SetPosition(entry.vert.emId, entry.initialPos)
+				Core.em:SetPosition(entry.vert.emId, entry.initialPos)
 			end
 		end
 	end
@@ -56,10 +57,10 @@ function Transform.Cancel(session)
 	savedVerts = nil
 end
 
-function Transform.Apply(session, handle)
+function Transform.Apply(handle)
 	if not startPos or not savedVerts or #savedVerts == 0 then return false end
 	local worldDelta = handle.CFrame.Position - startPos
-	session:ApplyTransformToVerts(savedVerts, worldDelta)
+	Core.ApplyTransformToVerts(savedVerts, worldDelta)
 	return true
 end
 

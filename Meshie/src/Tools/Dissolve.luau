@@ -1,3 +1,4 @@
+local Core       = require(script.Parent.Parent.Core)
 local Operations = require(script.Parent.Parent.Core.Operations)
 
 local Dissolve = {}
@@ -6,29 +7,29 @@ local armedEdgeId   = nil
 local dissolveVerts = false
 local savedBM       = nil
 
-function Dissolve.Activate(session, handle)
-	savedBM       = Operations.cloneBMesh(session.bm)
+function Dissolve.Activate(handle)
+	savedBM       = Operations.cloneBMesh(Core.bm)
 	dissolveVerts = false
 	armedEdgeId   = handle:GetAttribute("EdgeId")
 end
 
-function Dissolve.Commit(_session)
-	armedEdgeId = nil
+function Dissolve.Commit()
+	armedEdgeId   = nil
 	dissolveVerts = false
-	savedBM = nil
+	savedBM       = nil
 end
 
-function Dissolve.Cancel(session)
+function Dissolve.Cancel()
 	if savedBM then
-		session:SetBMesh(savedBM)  -- restores bm and rebuilds EM
+		Core.SetBMesh(savedBM)
 	end
-	armedEdgeId = nil
+	armedEdgeId   = nil
 	dissolveVerts = false
-	savedBM = nil
+	savedBM       = nil
 end
 
 -- Apply is always a no-op for Dissolve — operation is performed by Execute().
-function Dissolve.Apply(_session, _handle)
+function Dissolve.Apply(_handle)
 	return false
 end
 
@@ -38,11 +39,11 @@ end
 
 -- Perform the dissolve. Called by MPE from the operator panel action,
 -- before Commit. Returns true if the dissolve succeeded.
-function Dissolve.Execute(session)
+function Dissolve.Execute()
 	if not armedEdgeId then return false end
-	local edge = session.bm and session.bm.edges[armedEdgeId]
+	local edge = Core.bm and Core.bm.edges[armedEdgeId]
 	if not edge then return false end
-	local result = session:DissolveEdge(edge, dissolveVerts)
+	local result = Core.DissolveEdge(edge, dissolveVerts)
 	return result ~= nil
 end
 

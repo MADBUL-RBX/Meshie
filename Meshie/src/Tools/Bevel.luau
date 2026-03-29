@@ -1,3 +1,4 @@
+local Core             = require(script.Parent.Parent.Core)
 local Operations       = require(script.Parent.Parent.Core.Operations)
 local SelectionManager = require(script.Parent.Parent.Scene.SelectionManager)
 
@@ -6,36 +7,34 @@ local Bevel = {}
 local savedBM  = nil
 local startPos = nil
 
-function Bevel.Activate(session, handle)
+function Bevel.Activate(handle)
 	savedBM  = nil
 	startPos = nil
 
-	if not session.bm then return end
+	if not Core.bm then return end
 
 	local pt = handle:GetAttribute("ProxyType")
 	if pt ~= "Edge" and pt ~= "Vertex" then return end
 
 	startPos = handle.CFrame.Position
-	savedBM  = Operations.cloneBMesh(session.bm)
+	savedBM  = Operations.cloneBMesh(Core.bm)
 end
 
-function Bevel.Commit(_session)
+function Bevel.Commit()
 	savedBM  = nil
 	startPos = nil
 end
 
-function Bevel.Cancel(session)
+function Bevel.Cancel()
 	if savedBM then
-		session:SetBMesh(savedBM)
+		Core.SetBMesh(savedBM)
 	end
 	savedBM  = nil
 	startPos = nil
 end
 
-function Bevel.Apply(session, handle)
-	if not savedBM or not startPos then
-		return false
-	end
+function Bevel.Apply(handle)
+	if not savedBM or not startPos then return false end
 
 	local depth   = (handle.CFrame.Position - startPos).Magnitude
 	local freshBM = Operations.cloneBMesh(savedBM)
@@ -56,7 +55,7 @@ function Bevel.Apply(session, handle)
 		end
 	end
 
-	session:SetBMesh(freshBM)
+	Core.SetBMesh(freshBM)
 	return true
 end
 

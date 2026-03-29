@@ -1,7 +1,7 @@
 local CoreGui = game:GetService("CoreGui")
 
-local UIConfig = require(script.Parent.UIConfig)
-local Factory  = require(script.Parent.Factory)
+local UIConfig = require(script.UIConfig)
+local Factory  = require(script.Factory)
 
 local Hud = {}
 
@@ -178,7 +178,7 @@ function Hud.Start()
 		infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
 	toolLabel = Factory.MakeLabel("ToolLabel", "Select",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 14),
+		UDim2.new(1, -UIConfig.Padding * 2, 0, 108),
 		UDim2.new(0, UIConfig.Padding, 0, 108),
 		infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
@@ -233,12 +233,11 @@ function Hud.Start()
 		UDim2.new(0, UIConfig.Padding, 0, 8),
 		topPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
-
 	-- ─── Geometry mode panel ──────────────────────────────────────────────────
 	geometryPanel = Factory.MakePanel("GeometryPanel",
 		UDim2.new(0, UIConfig.FaceModePanelWidth, 0, 58),
 		Vector2.new(0.5, 0),
-		UDim2.new(0.5, 0, 0, UIConfig.Margin + 68),  -- below top panel
+		UDim2.new(0.5, 0, 0, UIConfig.Margin + 68),
 		gui)
 
 	Factory.MakeLabel("GeometryModeLabel", "Mode",
@@ -253,7 +252,7 @@ function Hud.Start()
 
 	for i, modeName in ipairs(modeNames) do
 		local xOff = UIConfig.Padding + (i - 1) * (btnWidth + 2)
-		local btn = Factory.MakeButton("GeoMode" .. modeName,  modeName,
+		local btn = Factory.MakeButton("GeoMode" .. modeName, modeName,
 			UDim2.new(0, btnWidth, 0, 26),
 			UDim2.new(0, xOff, 0, 24),
 			geometryPanel)
@@ -277,7 +276,6 @@ function Hud.Start()
 		geometryButtons[modeName] = btn
 	end
 
-	-- Default active mode
 	Hud.SetGeometryMode("Vertex")
 
 	-- ─── Settings ─────────────────────────────────────────────────────────────
@@ -342,7 +340,6 @@ end
 
 -- ─── Operator Panel ───────────────────────────────────────────────────────────
 
--- Show the operator panel for the given toolstate, or hide if nil
 function Hud.SetOperatorPanel(toolstateName)
 	destroyOperatorPanel()
 	if not toolstateName then return end
@@ -353,7 +350,6 @@ function Hud.SetOperatorPanel(toolstateName)
 
 	elseif toolstateName == "Bevel" then
 		local panel = makeOperatorPanelBase("Bevel")
-		-- Iterations and depth settings will go here in future
 		Factory.MakeLabel("BevelNote", "Move handle to adjust depth.",
 			UDim2.new(1, -UIConfig.Padding * 2, 0, 28),
 			UDim2.new(0, UIConfig.Padding, 0, 34),
@@ -424,7 +420,6 @@ function Hud.SetStatus(text)
 	if noteLabel then noteLabel.Text = table.concat(extras, "\n") end
 end
 
--- Which toolstates are valid for each geometry mode
 local validToolsForMode = {
 	Vertex = { Transform = true, Bevel = true },
 	Edge   = { Transform = true, Bevel = true, Dissolve = true },
@@ -435,7 +430,6 @@ function Hud.SetGeometryMode(mode)
 	for name, btn in pairs(geometryButtons) do
 		setToggleButtonActive(btn, name == mode, name, name)
 	end
-	-- Grey out toolstate buttons not valid for this mode
 	local valid = validToolsForMode[mode] or {}
 	for name, entry in pairs(toolButtons) do
 		local isValid = valid[name] == true
@@ -451,12 +445,12 @@ function Hud.SetGeometryMode(mode)
 	end
 end
 
-function Hud.SetGeometryModeCallback(callback) onGeometryMode = callback end
-function Hud.SetMainActionCallback(callback)       onMainAction = callback end
-function Hud.SetToolStateCallback(callback)        onToolState = callback end
-function Hud.SetUploadActionCallback(callback)     onUploadAction = callback end
-function Hud.SetOperatorCommitCallback(callback)   onOperatorCommit = callback end
-function Hud.SetOperatorCancelCallback(callback)   onOperatorCancel = callback end
+function Hud.SetGeometryModeCallback(callback)  onGeometryMode   = callback end
+function Hud.SetMainActionCallback(callback)     onMainAction     = callback end
+function Hud.SetToolStateCallback(callback)      onToolState      = callback end
+function Hud.SetUploadActionCallback(callback)   onUploadAction   = callback end
+function Hud.SetOperatorCommitCallback(callback) onOperatorCommit = callback end
+function Hud.SetOperatorCancelCallback(callback) onOperatorCancel = callback end
 
 function Hud.SetToolStates(items, activeName)
 	clearToolButtons()
