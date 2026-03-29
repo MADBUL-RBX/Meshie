@@ -3,20 +3,18 @@ local SelectionManager = require(script.Parent.Parent.Scene.SelectionManager)
 
 local Transform = {}
 
-function Transform.Activate(_session, _handle) end
-function Transform.Commit(_session)             end
-function Transform.Cancel(_session)             end  -- CHS reverts EM; no state to restore
+local startPos   = nil
+local savedVerts = nil  -- { { vert = v, initialPos = v.position } }
 
-function Transform.Apply(session, _handle, oldCF, oldSz, newCF, newSz)
-	if not session.bm then return false end
-
-	local verts = {}
-	local seen  = {}
+function Transform.Activate(session, handle)
+	startPos   = handle.CFrame.Position
+	savedVerts = {}
+	local seen = {}
 
 	local function addVert(v)
 		if v and not seen[v.id] then
-			seen[v.id]        = true
-			verts[#verts + 1] = v
+			seen[v.id]               = true
+			savedVerts[#savedVerts + 1] = { vert = v, initialPos = v.position }
 		end
 	end
 
@@ -38,10 +36,30 @@ function Transform.Apply(session, _handle, oldCF, oldSz, newCF, newSz)
 			end
 		end
 	end
+end
 
-	if #verts == 0 then return false end
+function Transform.Commit(_session)
+	startPos   = nil
+	savedVerts = nil
+end
 
-	session:ApplyTransformToVerts(verts, oldCF, oldSz, newCF, newSz)
+function Transform.Cancel(session)
+	if savedVerts and session.bm and session.em then
+		for _, entry in ipairs(savedVerts) do
+			entry.vert.position = entry.initialPos
+			if entry.vert.emId then
+				session.em:SetPosition(entry.vert.emId, entry.initialPos)
+			end
+		end
+	end
+	startPos   = nil
+	savedVerts = nil
+end
+
+function Transform.Apply(session, handle)
+	if not startPos or not savedVerts or #savedVerts == 0 then return false end
+	local worldDelta = handle.CFrame.Position - startPos
+	session:ApplyTransformToVerts(savedVerts, worldDelta)
 	return true
 end
 

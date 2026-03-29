@@ -215,12 +215,12 @@ end
 
 -- ─── Handle movement — the core loop ─────────────────────────────────────────
 
-local function onHandleChanged(handle, oldCF, oldSz, newCF, newSz)
+local function onHandleChanged(handle)
 	if not session or activeToolState == SELECT_MODE then
 		return
 	end
 	local tool = toolstates[activeToolState]
-	if tool.Apply(session, handle, oldCF, oldSz, newCF, newSz) then
+	if tool.Apply(session, handle) then
 		syncScene()
 		refreshHud()
 	end

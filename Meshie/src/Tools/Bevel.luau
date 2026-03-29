@@ -3,57 +3,41 @@ local SelectionManager = require(script.Parent.Parent.Scene.SelectionManager)
 
 local Bevel = {}
 
-local savedBM   = nil
-local startCF   = nil
-local bevelAxis = nil  -- world-space axis along which the primary handle was dragged
-
-local function normalFromHandle(handle)
-	local x = handle:GetAttribute("NormalX")
-	local y = handle:GetAttribute("NormalY")
-	local z = handle:GetAttribute("NormalZ")
-	if x and y and z then
-		local v = Vector3.new(x, y, z)
-		if v.Magnitude > 1e-5 then return v.Unit end
-	end
-	return handle.CFrame.UpVector
-end
+local savedBM  = nil
+local startPos = nil
 
 function Bevel.Activate(session, handle)
-	savedBM   = nil
-	startCF   = nil
-	bevelAxis = nil
+	savedBM  = nil
+	startPos = nil
 
 	if not session.bm then return end
 
 	local pt = handle:GetAttribute("ProxyType")
 	if pt ~= "Edge" and pt ~= "Vertex" then return end
 
-	bevelAxis = normalFromHandle(handle)
-	startCF   = handle.CFrame
-	savedBM   = Operations.cloneBMesh(session.bm)
+	startPos = handle.CFrame.Position
+	savedBM  = Operations.cloneBMesh(session.bm)
 end
 
 function Bevel.Commit(_session)
-	savedBM   = nil
-	startCF   = nil
-	bevelAxis = nil
+	savedBM  = nil
+	startPos = nil
 end
 
 function Bevel.Cancel(session)
 	if savedBM then
 		session:SetBMesh(savedBM)
 	end
-	savedBM   = nil
-	startCF   = nil
-	bevelAxis = nil
+	savedBM  = nil
+	startPos = nil
 end
 
-function Bevel.Apply(session, _handle, _oCF, _oSz, newCF, _nSz)
-	if not savedBM or not startCF or not bevelAxis then
+function Bevel.Apply(session, handle)
+	if not savedBM or not startPos then
 		return false
 	end
 
-	local depth   = math.max(0, (newCF.Position - startCF.Position):Dot(bevelAxis))
+	local depth   = (handle.CFrame.Position - startPos).Magnitude
 	local freshBM = Operations.cloneBMesh(savedBM)
 
 	if depth > 0 then

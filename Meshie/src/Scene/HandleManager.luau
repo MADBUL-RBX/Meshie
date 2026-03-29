@@ -1,20 +1,18 @@
 -- HandleManager.luau
--- Owns the single active handle and its Listen connection.
--- Creates one handle from a proxy, forces Studio selection on it,
--- and attaches/detaches Listen for the active operation.
+-- Owns the single active handle and its property signal connections.
+-- Creates one handle from a proxy, and attaches/detaches change listeners
+-- for the active operation.
 
-local Listen = require(script.Parent.Parent.Listen)
 local ToolHandles = require(script.Parent.ToolHandles)
 
 local HandleManager = {}
 
 local activeHandle = nil
-local connection = nil
-local onChanged = nil
+local connection   = nil
+local onChanged    = nil
 
 local function copyProxyAttributes(proxy, handle)
 	handle:SetAttribute("IsToolHandle", true)
-	-- Copy all proxy attributes wholesale so normals, tangents, IDs all transfer.
 	for attr, value in pairs(proxy:GetAttributes()) do
 		handle:SetAttribute(attr, value)
 	end
@@ -24,7 +22,6 @@ function HandleManager.Init(callback)
 	onChanged = callback
 end
 
--- Create a handle for the given proxy, force-select it in Studio.
 function HandleManager.Arm(proxy)
 	HandleManager.Clear()
 
@@ -38,24 +35,22 @@ function HandleManager.Arm(proxy)
 	return handle
 end
 
--- Attach Listen to the active handle. Call when an operation begins.
 function HandleManager.BeginListening()
-	if not activeHandle then
-		return
-	end
-	if connection then
-		for _, c in ipairs(connection) do
-			c:Disconnect()
-		end
-	end
-	connection = Listen.Attach(activeHandle, function(h, oCF, oSz, nCF, nSz)
+	if not activeHandle then return end
+	HandleManager.StopListening()
+
+	local function fire()
 		if onChanged then
-			onChanged(h, oCF, oSz, nCF, nSz)
+			onChanged(activeHandle)
 		end
-	end)
+	end
+
+	connection = {
+		activeHandle:GetPropertyChangedSignal("CFrame"):Connect(fire),
+		activeHandle:GetPropertyChangedSignal("Size"):Connect(fire),
+	}
 end
 
--- Detach Listen. Call when an operation ends.
 function HandleManager.StopListening()
 	if connection then
 		for _, c in ipairs(connection) do
@@ -65,7 +60,6 @@ function HandleManager.StopListening()
 	end
 end
 
--- Destroy the active handle and stop listening.
 function HandleManager.Clear()
 	HandleManager.StopListening()
 	if activeHandle then
@@ -77,6 +71,7 @@ end
 function HandleManager.GetHandle()
 	return activeHandle
 end
+
 function HandleManager.HasHandle()
 	return activeHandle ~= nil
 end

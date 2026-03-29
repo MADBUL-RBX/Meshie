@@ -28,7 +28,7 @@ function Dissolve.Cancel(session)
 end
 
 -- Apply is always a no-op for Dissolve — operation is performed by Execute().
-function Dissolve.Apply(_session, _handle, _oCF, _oSz, _nCF, _nSz)
+function Dissolve.Apply(_session, _handle)
 	return false
 end
 

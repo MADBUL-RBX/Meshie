@@ -196,23 +196,19 @@ end
 -- ─── EM mutation helpers ──────────────────────────────────────────────────────
 
 -- Move verts in BMesh and write to EM via SetPosition.
--- Called live every snap increment — no rebuildEM.
-function Session:ApplyTransformToVerts(verts, oldCF, oldSz, newCF, newSz)
+-- savedVerts: { { vert = v, initialPos = v.position } } — snapshot taken at tool Activate.
+-- worldDelta: Vector3 offset from the handle's initial position to its current position.
+-- Called live every signal fire — no rebuildEM.
+function Session:ApplyTransformToVerts(savedVerts, worldDelta)
 	if not self.bm or not self.em then
 		return
 	end
-	local function ax(o, n)
-		return if o == 0 then 1 else n / o
-	end
-	local scale = Vector3.new(ax(oldSz.X, newSz.X), ax(oldSz.Y, newSz.Y), ax(oldSz.Z, newSz.Z))
-	for _, vert in ipairs(verts) do
-		local world = self:LocalToWorld(vert.position)
-		local handleLocal = oldCF:PointToObjectSpace(world)
-		local scaledLocal = handleLocal * scale
-		local newWorld = newCF:PointToWorldSpace(scaledLocal)
-		vert.position = self:WorldToLocal(newWorld)
-		if vert.emId then
-			self.em:SetPosition(vert.emId, vert.position)
+	local localDelta = self.sourceMeshPart.CFrame:VectorToObjectSpace(worldDelta) / self:GetScaleFactor()
+	for _, entry in ipairs(savedVerts) do
+		local newPos = entry.initialPos + localDelta
+		entry.vert.position = newPos
+		if entry.vert.emId then
+			self.em:SetPosition(entry.vert.emId, newPos)
 		end
 	end
 end

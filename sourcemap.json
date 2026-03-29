@@ -78,14 +78,6 @@
                       ]
                     },
                     {
-                      "name": "Listen",
-                      "className": "ModuleScript",
-                      "pluginManaged": true,
-                      "filePaths": [
-                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Listen.luau"
-                      ]
-                    },
-                    {
                       "name": "MPE",
                       "className": "ModuleScript",
                       "pluginManaged": true,

@@ -3,28 +3,36 @@ local Operations = require(script.Parent.Parent.Core.Operations)
 
 local Extrude = {}
 
-local extrudeResult = nil
-local savedBM       = nil
+local extrudeResult  = nil
+local savedBM        = nil
+local startPos       = nil
+local savedCapVerts  = nil  -- { { vert = v, initialPos = v.position } }
 
-function Extrude.Activate(session, _handle)
+function Extrude.Activate(session, handle)
 	extrudeResult = nil
 	savedBM       = Operations.cloneBMesh(session.bm)
+	startPos      = handle.CFrame.Position
+	savedCapVerts = nil
 end
 
 function Extrude.Commit(_session)
 	extrudeResult = nil
 	savedBM       = nil
+	startPos      = nil
+	savedCapVerts = nil
 end
 
 function Extrude.Cancel(session)
 	if savedBM then
-		session:SetBMesh(savedBM)  -- restores bm and rebuilds EM
+		session:SetBMesh(savedBM)
 	end
 	extrudeResult = nil
 	savedBM       = nil
+	startPos      = nil
+	savedCapVerts = nil
 end
 
-function Extrude.Apply(session, handle, oldCF, oldSz, newCF, newSz)
+function Extrude.Apply(session, handle)
 	if not session.bm then return false end
 
 	if not extrudeResult then
@@ -32,9 +40,14 @@ function Extrude.Apply(session, handle, oldCF, oldSz, newCF, newSz)
 		local face = fid and session.bm.faces[fid]
 		if not face then return false end
 
-		-- ExtrudeFace mutates bm and rebuilds EM, refreshing all emIds
 		extrudeResult = session:ExtrudeFace(face)
 		if not extrudeResult then return false end
+
+		-- Snapshot cap vert initial positions (at the original face location)
+		savedCapVerts = {}
+		for _, v in ipairs(extrudeResult.capVerts) do
+			savedCapVerts[#savedCapVerts + 1] = { vert = v, initialPos = v.position }
+		end
 
 		-- Update handle attributes to point at the new cap face
 		local capVerts = BMesh.faceVerts(extrudeResult.capFace)
@@ -45,8 +58,10 @@ function Extrude.Apply(session, handle, oldCF, oldSz, newCF, newSz)
 		end
 	end
 
-	-- Move cap verts live via SetPosition
-	session:ApplyTransformToVerts(extrudeResult.capVerts, oldCF, oldSz, newCF, newSz)
+	if not savedCapVerts or not startPos then return false end
+
+	local worldDelta = handle.CFrame.Position - startPos
+	session:ApplyTransformToVerts(savedCapVerts, worldDelta)
 	return true
 end
 
