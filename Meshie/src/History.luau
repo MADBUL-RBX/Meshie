@@ -17,6 +17,29 @@ local activeId = nil
 local pendingBM = nil
 local undoStack = {}
 local redoStack = {}
+local undoConn  = nil
+local redoConn  = nil
+
+-- ─── CHS event wiring ────────────────────────────────────────────────────────
+
+-- Register undo/redo callbacks. CHS connections live here so no other module
+-- needs to import ChangeHistoryService. Safe to call multiple times.
+function History.Listen(onUndo, onRedo)
+	History.Unlisten()
+	undoConn = CHS.OnUndo:Connect(onUndo)
+	redoConn = CHS.OnRedo:Connect(onRedo)
+end
+
+function History.Unlisten()
+	if undoConn then
+		undoConn:Disconnect()
+		undoConn = nil
+	end
+	if redoConn then
+		redoConn:Disconnect()
+		redoConn = nil
+	end
+end
 
 -- ─── Session start ────────────────────────────────────────────────────────────
 

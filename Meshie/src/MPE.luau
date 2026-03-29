@@ -7,8 +7,6 @@
 -- Tools are pure computation — they never call EditScene directly.
 -- All proxy rebuilds happen here and only here.
 
-local Selection = game:GetService("Selection")
-
 local Hotkeys = require(script.Parent.Hotkeys)
 local UserConfig = require(script.Parent.UserConfig)
 local Hud = require(script.Parent.UI.Hud)
@@ -32,10 +30,7 @@ local SELECT_MODE = "Select"
 local session = nil -- active MeshSession object; non-nil iff in session
 local enabled = false
 local activeToolState = SELECT_MODE
-local undoConn = nil
-local redoConn = nil
 local toolbarButton = nil
-local autoCommitConn = nil
 
 local toolstates = {
 	Transform = Transform,
@@ -97,18 +92,11 @@ end
 
 -- ─── Operation lifecycle ──────────────────────────────────────────────────────
 
-local function disconnectAutoCommit()
-	if autoCommitConn then
-		autoCommitConn:Disconnect()
-		autoCommitConn = nil
-	end
-end
-
 local function commitOperation()
 	if activeToolState == SELECT_MODE then
 		return
 	end
-	disconnectAutoCommit()
+	SelectionManager.UnfocusHandle()
 
 	-- Dissolve performs its operation on commit (Apply is always a no-op for Dissolve)
 	if activeToolState == "Dissolve" then
@@ -135,7 +123,7 @@ local function cancelOperation()
 	if activeToolState == SELECT_MODE then
 		return
 	end
-	disconnectAutoCommit()
+	SelectionManager.UnfocusHandle()
 
 	-- Tool Cancel calls session:SetBMesh(savedBM) to restore topology.
 	toolstates[activeToolState].Cancel(session)
@@ -162,16 +150,6 @@ local function activateToolState(name)
 		return
 	end
 
-	-- Snapshot Studio's current selection before HandleManager.Arm clobbers it.
-	SelectionManager.Clear()
-	for _, inst in ipairs(Selection:Get()) do
-		if inst:GetAttribute("IsToolHandle") then continue end
-		local pt = inst:GetAttribute("ProxyType")
-		if not pt then continue end
-		if pt ~= GeometryMode.Get() then continue end
-		SelectionManager.Add(inst)
-	end
-
 	if not SelectionManager.HasSelection() then
 		return
 	end
@@ -187,12 +165,19 @@ local function activateToolState(name)
 	end
 
 	if activeToolState ~= SELECT_MODE then
+		-- Cancel the current operation. cancelOperation clears SelectionManager,
+		-- so re-add the target entry afterwards using a fresh proxy reference.
 		cancelOperation()
+		local freshProxy = EditScene.FindProxy(entry.name)
+		if not freshProxy then return end
+		SelectionManager.Add(freshProxy)
+		entry = SelectionManager.GetLast()
+		if not entry then return end
 	end
 
 	activeToolState = name
 
-	local proxy = EditScene.FindProxy(entry.name)
+	local proxy = entry.proxy or EditScene.FindProxy(entry.name)
 	if not proxy then
 		activeToolState = SELECT_MODE
 		return
@@ -204,26 +189,12 @@ local function activateToolState(name)
 		return
 	end
 
+	SelectionManager.FocusHandle(handle, commitOperation)
 	History.StartRecording(name, session)
 	toolstates[name].Activate(session, handle)
 	HandleManager.BeginListening()
 	Hud.SetOperatorPanel(name)
 	refreshHud()
-
-	-- Auto-commit when the handle is deselected.
-	-- Deferred one frame to skip the SelectionChanged fired by HandleManager.Arm.
-	task.defer(function()
-		if activeToolState == SELECT_MODE then return end
-		autoCommitConn = Selection.SelectionChanged:Connect(function()
-			local sel = Selection:Get()
-			for _, inst in ipairs(sel) do
-				if inst:GetAttribute("IsToolHandle") then
-					return -- handle still selected, keep going
-				end
-			end
-			commitOperation()
-		end)
-	end)
 end
 
 -- ─── Geometry mode ────────────────────────────────────────────────────────────
@@ -258,7 +229,7 @@ end
 -- ─── Session lifecycle ────────────────────────────────────────────────────────
 
 local function beginSession()
-	local sel = Selection:Get()
+	local sel = SelectionManager.GetStudioSelection()
 	if #sel ~= 1 or not sel[1]:IsA("MeshPart") then
 		Hud.SetStatus("Select one MeshPart.")
 		return
@@ -272,9 +243,8 @@ local function beginSession()
 	History.Begin(session)
 
 	EditScene.Begin()
-	Selection:Set({})
+	SelectionManager.Begin()
 	HandleManager.Init(onHandleChanged)
-	SelectionManager.Clear()
 	syncScene()
 	refreshHud()
 end
@@ -284,7 +254,6 @@ local function endSession()
 		cancelOperation()
 	end
 	HandleManager.Clear()
-	SelectionManager.Clear()
 
 	local meshPart = session.sourceMeshPart
 	EditScene.ApplyFaceProxyColorsToSession(session.bm)
@@ -293,9 +262,7 @@ local function endSession()
 	session:Destroy()
 	session = nil
 
-	if meshPart then
-		Selection:Set({ meshPart })
-	end
+	SelectionManager.End(meshPart)
 	refreshHud()
 end
 
@@ -306,11 +273,8 @@ local function enable(_p, button)
 	toolbarButton:SetActive(true)
 
 	local historyBusy = false
-	local function onHistoryChanged(label, isRedo)
-		print("[MPE]", label, "fired — session:", session ~= nil, "busy:", historyBusy)
-		if historyBusy or not session then
-			return
-		end
+	local function onHistoryChanged(isRedo)
+		if historyBusy or not session then return end
 		historyBusy = true
 		History.Restore(session, isRedo)
 		syncScene()
@@ -319,12 +283,10 @@ local function enable(_p, button)
 			historyBusy = false
 		end)
 	end
-	undoConn = game:GetService("ChangeHistoryService").OnUndo:Connect(function()
-		onHistoryChanged("OnUndo", false)
-	end)
-	redoConn = game:GetService("ChangeHistoryService").OnRedo:Connect(function()
-		onHistoryChanged("OnRedo", true)
-	end)
+	History.Listen(
+		function() onHistoryChanged(false) end,
+		function() onHistoryChanged(true) end
+	)
 
 	Hud.Start()
 	Hud.SetToolStates(toolStateItems, SELECT_MODE)
@@ -355,18 +317,9 @@ local function disable()
 		endSession()
 	end
 
-	if undoConn then
-		undoConn:Disconnect()
-		undoConn = nil
-	end
-	if redoConn then
-		redoConn:Disconnect()
-		redoConn = nil
-	end
-	disconnectAutoCommit()
+	History.Unlisten()
 	Hotkeys.Destroy()
 	HandleManager.Clear()
-	SelectionManager.Clear()
 	Hud.SetVisible(false)
 	Hud.Destroy()
 

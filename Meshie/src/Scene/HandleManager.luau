@@ -5,7 +5,6 @@
 
 local Listen = require(script.Parent.Parent.Listen)
 local ToolHandles = require(script.Parent.ToolHandles)
-local SelectionService = game:GetService("Selection")
 
 local HandleManager = {}
 
@@ -36,10 +35,6 @@ function HandleManager.Arm(proxy)
 
 	copyProxyAttributes(proxy, handle)
 	activeHandle = handle
-
-	-- Force Studio to select the handle so the native Move tool works on it
-	SelectionService:Set({ handle })
-
 	return handle
 end
 
