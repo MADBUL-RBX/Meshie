@@ -36,6 +36,7 @@ local selectionConn = nil
 local undoConn = nil
 local redoConn = nil
 local toolbarButton = nil
+local autoCommitConn = nil
 
 local toolstates = {
 	Transform = Transform,
@@ -97,10 +98,18 @@ end
 
 -- ─── Operation lifecycle ──────────────────────────────────────────────────────
 
+local function disconnectAutoCommit()
+	if autoCommitConn then
+		autoCommitConn:Disconnect()
+		autoCommitConn = nil
+	end
+end
+
 local function commitOperation()
 	if activeToolState == SELECT_MODE then
 		return
 	end
+	disconnectAutoCommit()
 
 	-- Dissolve performs its operation on commit (Apply is always a no-op for Dissolve)
 	if activeToolState == "Dissolve" then
@@ -127,6 +136,7 @@ local function cancelOperation()
 	if activeToolState == SELECT_MODE then
 		return
 	end
+	disconnectAutoCommit()
 
 	-- Tool Cancel calls session:SetBMesh(savedBM) to restore topology.
 	toolstates[activeToolState].Cancel(session)
@@ -189,6 +199,21 @@ local function activateToolState(name)
 	HandleManager.BeginListening()
 	Hud.SetOperatorPanel(name)
 	refreshHud()
+
+	-- Auto-commit when the handle is deselected.
+	-- Deferred one frame to skip the SelectionChanged fired by HandleManager.Arm.
+	task.defer(function()
+		if activeToolState == SELECT_MODE then return end
+		autoCommitConn = Selection.SelectionChanged:Connect(function()
+			local sel = Selection:Get()
+			for _, inst in ipairs(sel) do
+				if inst:GetAttribute("IsToolHandle") then
+					return -- handle still selected, keep going
+				end
+			end
+			commitOperation()
+		end)
+	end)
 end
 
 -- ─── Geometry mode ────────────────────────────────────────────────────────────
@@ -366,6 +391,7 @@ local function disable()
 		selectionConn = nil
 	end
 
+	disconnectAutoCommit()
 	Hotkeys.Destroy()
 	HandleManager.Clear()
 	SelectionManager.Clear()
