@@ -1,18 +1,18 @@
--- BMesh.luau
+-- DataStructure.luau
 -- Half-edge mesh data structure.
 -- Elements: Vert, Edge, Face, Loop.
 -- Loops are the connective tissue — one per (vert, face) participation.
 -- All adjacency queries are O(1) pointer follows.
 
-local BMesh = {}
+local DataStructure = {}
 
 -- ─── Construction ─────────────────────────────────────────────────────────────
 
-function BMesh.new()
+function DataStructure.new()
 	return {
-		verts       = {},
-		edges       = {},
-		faces       = {},
+		verts = {},
+		edges = {},
+		faces = {},
 		_nextVertId = 1,
 		_nextEdgeId = 1,
 		_nextFaceId = 1,
@@ -21,8 +21,8 @@ end
 
 -- ─── Element creation ─────────────────────────────────────────────────────────
 
-function BMesh.addVert(bm, position)
-	local id   = bm._nextVertId
+function DataStructure.addVert(bm, position)
+	local id = bm._nextVertId
 	bm._nextVertId += 1
 	local vert = { id = id, position = position, loop = nil }
 	bm.verts[id] = vert
@@ -40,8 +40,10 @@ end
 
 local function getOrCreateEdge(bm, v1, v2)
 	local existing = findEdge(bm, v1, v2)
-	if existing then return existing end
-	local id   = bm._nextEdgeId
+	if existing then
+		return existing
+	end
+	local id = bm._nextEdgeId
 	bm._nextEdgeId += 1
 	local edge = { id = id, v1 = v1, v2 = v2, loop = nil }
 	bm.edges[id] = edge
@@ -50,15 +52,15 @@ end
 
 local function radialAppend(edge, loop)
 	if not edge.loop then
-		edge.loop        = loop
+		edge.loop = loop
 		loop.radial_next = loop
 		loop.radial_prev = loop
 	else
-		local existing           = edge.loop
-		local existingNext       = existing.radial_next
-		existing.radial_next     = loop
-		loop.radial_prev         = existing
-		loop.radial_next         = existingNext
+		local existing = edge.loop
+		local existingNext = existing.radial_next
+		existing.radial_next = loop
+		loop.radial_prev = existing
+		loop.radial_next = existingNext
 		existingNext.radial_prev = loop
 	end
 end
@@ -69,35 +71,37 @@ local function radialRemove(edge, loop)
 	else
 		loop.radial_prev.radial_next = loop.radial_next
 		loop.radial_next.radial_prev = loop.radial_prev
-		if edge.loop == loop then edge.loop = loop.radial_next end
+		if edge.loop == loop then
+			edge.loop = loop.radial_next
+		end
 	end
 	loop.radial_next = nil
 	loop.radial_prev = nil
 end
 
--- verts: ordered array of BMVert (3+)
+-- verts: ordered array of Vert (3+)
 -- style: { Color, Transparency } optional
-function BMesh.addFace(bm, verts, style)
-	assert(#verts >= 3, "BMesh.addFace: need at least 3 verts")
-	local id   = bm._nextFaceId
+function DataStructure.addFace(bm, verts, style)
+	assert(#verts >= 3, "DataStructure.addFace: need at least 3 verts")
+	local id = bm._nextFaceId
 	bm._nextFaceId += 1
 	local face = {
-		id           = id,
-		loop         = nil,
-		color        = (style and style.Color) or Color3.new(1, 1, 1),
+		id = id,
+		loop = nil,
+		color = (style and style.Color) or Color3.new(1, 1, 1),
 		transparency = (style and style.Transparency) or 0,
 	}
 	bm.faces[id] = face
 
-	local n     = #verts
+	local n = #verts
 	local loops = table.create(n)
 	for i = 1, n do
 		loops[i] = {
-			vert        = verts[i],
-			edge        = nil,
-			face        = face,
-			next        = nil,
-			prev        = nil,
+			vert = verts[i],
+			edge = nil,
+			face = face,
+			next = nil,
+			prev = nil,
 			radial_next = nil,
 			radial_prev = nil,
 		}
@@ -110,12 +114,14 @@ function BMesh.addFace(bm, verts, style)
 
 	for i = 1, n do
 		local loop = loops[i]
-		local vA   = verts[i]
-		local vB   = verts[(i % n) + 1]
+		local vA = verts[i]
+		local vB = verts[(i % n) + 1]
 		local edge = getOrCreateEdge(bm, vA, vB)
-		loop.edge  = edge
+		loop.edge = edge
 		radialAppend(edge, loop)
-		if not vA.loop then vA.loop = loop end
+		if not vA.loop then
+			vA.loop = loop
+		end
 	end
 
 	face.loop = loops[1]
@@ -124,8 +130,8 @@ end
 
 -- ─── removeFace ───────────────────────────────────────────────────────────────
 
-function BMesh.removeFace(bm, face)
-	local loops = BMesh.faceLoops(face)
+function DataStructure.removeFace(bm, face)
+	local loops = DataStructure.faceLoops(face)
 
 	local needUpdate = {}
 	for _, l in ipairs(loops) do
@@ -148,7 +154,9 @@ function BMesh.removeFace(bm, face)
 
 	for _, vert in ipairs(needUpdate) do
 		for _, e in pairs(bm.edges) do
-			if not e.loop then continue end
+			if not e.loop then
+				continue
+			end
 			local el = e.loop
 			repeat
 				if el.vert == vert then
@@ -157,21 +165,23 @@ function BMesh.removeFace(bm, face)
 				end
 				el = el.radial_next
 			until el == e.loop or vert.loop
-			if vert.loop then break end
+			if vert.loop then
+				break
+			end
 		end
 	end
 end
 
-function BMesh.removeVert(bm, vert)
+function DataStructure.removeVert(bm, vert)
 	bm.verts[vert.id] = nil
 end
 
 -- ─── Traversal ────────────────────────────────────────────────────────────────
 
-function BMesh.faceLoops(face)
+function DataStructure.faceLoops(face)
 	local result = {}
-	local start  = face.loop
-	local l      = start
+	local start = face.loop
+	local l = start
 	repeat
 		result[#result + 1] = l
 		l = l.next
@@ -179,10 +189,10 @@ function BMesh.faceLoops(face)
 	return result
 end
 
-function BMesh.faceVerts(face)
+function DataStructure.faceVerts(face)
 	local result = {}
-	local start  = face.loop
-	local l      = start
+	local start = face.loop
+	local l = start
 	repeat
 		result[#result + 1] = l.vert
 		l = l.next
@@ -190,11 +200,13 @@ function BMesh.faceVerts(face)
 	return result
 end
 
-function BMesh.edgeFaces(edge)
+function DataStructure.edgeFaces(edge)
 	local result = {}
-	if not edge.loop then return result end
+	if not edge.loop then
+		return result
+	end
 	local start = edge.loop
-	local l     = start
+	local l = start
 	repeat
 		result[#result + 1] = l.face
 		l = l.radial_next
@@ -202,11 +214,13 @@ function BMesh.edgeFaces(edge)
 	return result
 end
 
-function BMesh.vertFaces(vert)
+function DataStructure.vertFaces(vert)
 	local result = {}
-	if not vert.loop then return result end
+	if not vert.loop then
+		return result
+	end
 	local start = vert.loop
-	local l     = start
+	local l = start
 	repeat
 		result[#result + 1] = l.face
 		l = l.radial_next.next
@@ -214,11 +228,13 @@ function BMesh.vertFaces(vert)
 	return result
 end
 
-function BMesh.vertEdges(vert)
+function DataStructure.vertEdges(vert)
 	local result = {}
-	if not vert.loop then return result end
+	if not vert.loop then
+		return result
+	end
 	local start = vert.loop
-	local l     = start
+	local l = start
 	repeat
 		result[#result + 1] = l.edge
 		l = l.radial_next.next
@@ -226,65 +242,71 @@ function BMesh.vertEdges(vert)
 	return result
 end
 
-function BMesh.isBoundaryEdge(edge)
+function DataStructure.isBoundaryEdge(edge)
 	return edge.loop ~= nil and edge.loop.radial_next == edge.loop
 end
 
 -- ─── Geometry ─────────────────────────────────────────────────────────────────
 
 -- Face normal using Newell's method (correct for N-gons)
-function BMesh.faceNormal(face)
-	local n     = Vector3.zero
+function DataStructure.faceNormal(face)
+	local n = Vector3.zero
 	local start = face.loop
-	local l     = start
+	local l = start
 	repeat
 		local curr = l.vert.position
 		local next = l.next.vert.position
 		n += curr:Cross(next)
 		l = l.next
 	until l == start
-	if n.Magnitude > 1e-5 then return n.Unit end
+	if n.Magnitude > 1e-5 then
+		return n.Unit
+	end
 	return Vector3.new(0, 1, 0)
 end
 
-function BMesh.faceCentroid(face)
-	local sum   = Vector3.zero
+function DataStructure.faceCentroid(face)
+	local sum = Vector3.zero
 	local count = 0
 	local start = face.loop
-	local l     = start
+	local l = start
 	repeat
-		sum   += l.vert.position
+		sum += l.vert.position
 		count += 1
 		l = l.next
 	until l == start
 	return sum / count
 end
 
-function BMesh.vertNormal(vert)
+function DataStructure.vertNormal(vert)
 	local sum = Vector3.zero
-	for _, f in ipairs(BMesh.vertFaces(vert)) do
-		sum += BMesh.faceNormal(f)
+	for _, f in ipairs(DataStructure.vertFaces(vert)) do
+		sum += DataStructure.faceNormal(f)
 	end
-	if sum.Magnitude > 1e-5 then return sum.Unit end
+	if sum.Magnitude > 1e-5 then
+		return sum.Unit
+	end
 	return Vector3.new(0, 1, 0)
 end
 
-function BMesh.edgeMidpoint(edge)
+function DataStructure.edgeMidpoint(edge)
 	return (edge.v1.position + edge.v2.position) * 0.5
 end
 
-function BMesh.edgeNormal(edge)
+function DataStructure.edgeNormal(edge)
 	local sum = Vector3.zero
-	for _, f in ipairs(BMesh.edgeFaces(edge)) do
-		sum += BMesh.faceNormal(f)
+	for _, f in ipairs(DataStructure.edgeFaces(edge)) do
+		sum += DataStructure.faceNormal(f)
 	end
-	if sum.Magnitude > 1e-5 then return sum.Unit end
+	if sum.Magnitude > 1e-5 then
+		return sum.Unit
+	end
 	return Vector3.new(0, 1, 0)
 end
 
-function BMesh.removeOrphanedVerts(bm)
+function DataStructure.removeOrphanedVerts(bm)
 	for id, vert in pairs(bm.verts) do
-		if #BMesh.vertFaces(vert) == 0 then
+		if #DataStructure.vertFaces(vert) == 0 then
 			bm.verts[id] = nil
 		end
 	end
@@ -292,32 +314,29 @@ end
 
 -- ─── Normal cache ─────────────────────────────────────────────────────────────
 
--- Compute and store normals/tangents on all BMesh elements (local space).
+-- Compute and store normals/tangents on all mesh elements (local space).
 -- Sets face.normal, vert.normal, edge.normal, edge.tangent.
--- Call before RebuildProxies so proxies can stamp these as attributes.
-function BMesh.computeNormals(bm)
-	-- Face normals first — used by vert and edge normals below.
+-- Call before RebuildProxies so proxy orientation can be derived from RMesh data.
+function DataStructure.computeNormals(bm)
 	for _, face in pairs(bm.faces) do
-		face.normal = BMesh.faceNormal(face)
+		face.normal = DataStructure.faceNormal(face)
 	end
-	-- Vertex normals: average of adjacent face normals.
 	for _, vert in pairs(bm.verts) do
 		local sum = Vector3.zero
-		for _, f in ipairs(BMesh.vertFaces(vert)) do
+		for _, f in ipairs(DataStructure.vertFaces(vert)) do
 			sum += f.normal
 		end
 		vert.normal = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
 	end
-	-- Edge normals and tangents.
 	for _, edge in pairs(bm.edges) do
 		local sum = Vector3.zero
-		for _, f in ipairs(BMesh.edgeFaces(edge)) do
+		for _, f in ipairs(DataStructure.edgeFaces(edge)) do
 			sum += f.normal
 		end
-		edge.normal  = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
-		local dir    = edge.v2.position - edge.v1.position
+		edge.normal = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
+		local dir = edge.v2.position - edge.v1.position
 		edge.tangent = if dir.Magnitude > 1e-5 then dir.Unit else Vector3.new(1, 0, 0)
 	end
 end
 
-return BMesh
+return DataStructure

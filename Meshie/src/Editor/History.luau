@@ -1,21 +1,21 @@
 -- History.luau
--- Owns all CHS logic for MPE.
+-- Owns all CHS logic for the plugin.
 --
--- History.Begin()               -- initial snapshot + ResetWaypoints at session start
--- History.StartRecording(name)  -- snapshot BMesh + open recording
--- History.Commit()              -- push BMesh snapshot, ApplyMesh for CHS, close as Commit
--- History.Cancel()              -- discard snapshot, close as Cancel
--- History.Restore(isRedo)       -- pop BMesh stack, SetBMesh to restore
+-- History.Begin()               — initial snapshot + ResetWaypoints at session start
+-- History.StartRecording(name)  — snapshot mesh + open CHS recording
+-- History.Commit()              — push snapshot, ApplyMesh for CHS, close as Commit
+-- History.Cancel()              — discard snapshot, close as Cancel
+-- History.Restore(isRedo)       — pop mesh stack, SetBMesh to restore
 
 local AssetService = game:GetService("AssetService")
 local CHS          = game:GetService("ChangeHistoryService")
 
-local Core       = require(script.Parent.Core)
-local Operations = require(script.Parent.Core.Operations)
+local RMesh    = require(script.Parent.Parent.RMesh)
+local EulerOps = require(script.Parent.Parent.RMesh.Core.EulerOps)
 
 local History = {}
 
-local activeId = nil
+local activeId  = nil
 local pendingBM = nil
 local undoStack = {}
 local redoStack = {}
@@ -31,21 +31,15 @@ function History.Listen(onUndo, onRedo)
 end
 
 function History.Unlisten()
-	if undoConn then
-		undoConn:Disconnect()
-		undoConn = nil
-	end
-	if redoConn then
-		redoConn:Disconnect()
-		redoConn = nil
-	end
+	if undoConn then undoConn:Disconnect(); undoConn = nil end
+	if redoConn then redoConn:Disconnect(); redoConn = nil end
 end
 
 -- ─── Session start ────────────────────────────────────────────────────────────
 
 function History.Begin()
 	local ok, result, content = pcall(function()
-		return AssetService:CreateDataModelContentAsync(Content.fromObject(Core.em))
+		return AssetService:CreateDataModelContentAsync(Content.fromObject(RMesh.em))
 	end)
 	if not ok then
 		warn("[History] Begin snapshot failed:", result)
@@ -53,7 +47,7 @@ function History.Begin()
 	print("[History] Begin — snapshot ok:", ok)
 	if ok and content ~= nil then
 		local tempPart = AssetService:CreateMeshPartAsync(content)
-		Core.ApplyMeshUpdate(tempPart)
+		RMesh.ApplyMeshUpdate(tempPart)
 	end
 	CHS:ResetWaypoints()
 	undoStack = {}
@@ -63,7 +57,7 @@ end
 -- ─── Operation lifecycle ──────────────────────────────────────────────────────
 
 function History.StartRecording(name)
-	pendingBM = Operations.cloneBMesh(Core.bm)
+	pendingBM = EulerOps.cloneBMesh(RMesh.bm)
 	activeId  = CHS:TryBeginRecording(name)
 	print("[History] StartRecording:", name, "→", activeId)
 end
@@ -76,20 +70,20 @@ function History.Commit()
 		print("[History] Commit — undo depth:", #undoStack)
 	end
 
-	if not Core.em or not Core.sourceMeshPart then
+	if not RMesh.em or not RMesh.sourceMeshPart then
 		History.Cancel()
 		return
 	end
 
 	local ok, result, content = pcall(function()
-		return AssetService:CreateDataModelContentAsync(Content.fromObject(Core.em))
+		return AssetService:CreateDataModelContentAsync(Content.fromObject(RMesh.em))
 	end)
 	if not ok then
 		warn("[History] CreateDataModelContentAsync failed:", result)
 	end
 	if ok and content ~= nil then
 		local tempPart = AssetService:CreateMeshPartAsync(content)
-		Core.ApplyMeshUpdate(tempPart)
+		RMesh.ApplyMeshUpdate(tempPart)
 	end
 
 	if activeId then
@@ -123,10 +117,10 @@ function History.Restore(isRedo)
 		return
 	end
 
-	table.insert(toStack, Operations.cloneBMesh(Core.bm))
+	table.insert(toStack, EulerOps.cloneBMesh(RMesh.bm))
 	local bm = table.remove(fromStack)
 	print("[History]", label, "— restoring, remaining depth:", #fromStack)
-	Core.SetBMesh(bm)
+	RMesh.SetBMesh(bm)
 end
 
 return History

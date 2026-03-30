@@ -1,6 +1,6 @@
-local MPE          = require(script.Parent.MPE)
+local Editor       = require(script.Parent.Editor)
 local Version      = require(script.Parent.Version)
-local NoticePanel  = require(script.Parent.UI.NoticePanel)
+local NoticePanel  = require(script.Parent.HUD.NoticePanel)
 
 local toolbar      = plugin:CreateToolbar("Meshie")
 local toggleButton = toolbar:CreateButton("Meshie", "Toggle Meshie", "")
@@ -8,13 +8,13 @@ local toggleButton = toolbar:CreateButton("Meshie", "Toggle Meshie", "")
 local enabled = false
 
 toggleButton.Click:Connect(function()
-	MPE.Toggle(plugin, toggleButton)
+	Editor.Toggle(plugin, toggleButton)
 	enabled = not enabled
 end)
 
 plugin.Unloading:Connect(function()
 	if enabled then
-		MPE.Toggle(plugin, toggleButton)
+		Editor.Toggle(plugin, toggleButton)
 	end
 end)
 

@@ -1,18 +1,20 @@
--- Scene/init.luau
--- Manages in-world proxy Parts representing the BMesh visually.
--- Reads mesh data directly from Core (singleton).
--- Proxies are purely visual — only the active handle has listeners.
+-- ProxyManager/init.luau
+-- Manages in-world proxy Parts representing the mesh visually.
+-- Reads mesh data from RMesh (singleton).
+--
+-- Each proxy carries exactly ONE attribute: ElementId.
+-- Proxy type is encoded by folder: VertexProxies / EdgeProxies / FaceProxies.
 
 local AssetService = game:GetService("AssetService")
 
-local Core       = require(script.Parent.Core)
-local UserConfig = require(script.Parent.UserConfig)
-local BMesh      = require(script.Parent.Core.BMesh)
-local ToolHandles = require(script.ToolHandles)
+local RMesh         = require(script.Parent)
+local DataStructure = require(script.Parent.Core.DataStructure)
+local UserConfig    = require(script.Parent.Parent.HUD.UserConfig)
+local HandleManager = require(script.HandleManager)
 
-local Scene = {}
+local ProxyManager = {}
 
-local root = nil
+local root         = nil
 local vertexFolder = nil
 local edgeFolder   = nil
 local faceFolder   = nil
@@ -56,16 +58,16 @@ local function buildFaceProxy(worldPoints)
 		})
 	end)
 	if not ok then
-		warn("[Scene] buildFaceProxy failed:", err)
+		warn("[ProxyManager] buildFaceProxy failed:", err)
 		em = nil
 		return nil, nil, nil
 	end
 
-	facePart.Anchored    = true
-	facePart.CanCollide  = false
-	facePart.CanTouch    = false
-	facePart.Archivable  = false
-	facePart.CFrame      = CFrame.fromMatrix(center, xAxis, yAxis, zAxis)
+	facePart.Anchored   = true
+	facePart.CanCollide = false
+	facePart.CanTouch   = false
+	facePart.Archivable = false
+	facePart.CFrame     = CFrame.fromMatrix(center, xAxis, yAxis, zAxis)
 	return facePart, em, normal
 end
 
@@ -108,21 +110,17 @@ local function rebuildVertexProxy(vert, localToWorld, localDirToWorld)
 	local worldNormal = localDirToWorld(vert.normal or Vector3.new(0, 1, 0))
 
 	local p = Instance.new("Part")
-	p.Shape       = Enum.PartType.Ball
-	p.Material    = UserConfig.VertexMaterial
-	p.Color       = UserConfig.VertexColor
-	p.Size        = Vector3.one * UserConfig.VertexSize
-	p.Anchored    = true
-	p.CanCollide  = false
-	p.CanTouch    = false
-	p.Archivable  = false
-	p.Name        = name
-	p.CFrame      = orientedCFrame(worldPos, worldNormal, Vector3.new(1, 0, 0))
-	p:SetAttribute("ProxyType", "Vertex")
-	p:SetAttribute("VertId",    vert.id)
-	p:SetAttribute("NormalX",   worldNormal.X)
-	p:SetAttribute("NormalY",   worldNormal.Y)
-	p:SetAttribute("NormalZ",   worldNormal.Z)
+	p.Shape      = Enum.PartType.Ball
+	p.Material   = UserConfig.VertexMaterial
+	p.Color      = UserConfig.VertexColor
+	p.Size       = Vector3.one * UserConfig.VertexSize
+	p.Anchored   = true
+	p.CanCollide = false
+	p.CanTouch   = false
+	p.Archivable = false
+	p.Name       = name
+	p.CFrame     = orientedCFrame(worldPos, worldNormal, Vector3.new(1, 0, 0))
+	p:SetAttribute("ElementId", vert.id)
 	p.Parent = vertexFolder
 end
 
@@ -138,8 +136,7 @@ local function rebuildEdgeProxy(edge, localToWorld, localDirToWorld)
 	local len = dir.Magnitude
 	if len <= 0 then return end
 
-	local worldNormal  = localDirToWorld(edge.normal  or Vector3.new(0, 1, 0))
-	local worldTangent = localDirToWorld(edge.tangent or dir.Unit)
+	local worldNormal = localDirToWorld(edge.normal or Vector3.new(0, 1, 0))
 
 	local p = Instance.new("Part")
 	p.Shape      = Enum.PartType.Block
@@ -157,16 +154,7 @@ local function rebuildEdgeProxy(edge, localToWorld, localDirToWorld)
 		upVec = math.abs(lookDir:Dot(Vector3.new(0, 1, 0))) < 0.9 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
 	end
 	p.CFrame = CFrame.lookAlong((wA + wB) * 0.5, lookDir, upVec)
-	p:SetAttribute("ProxyType", "Edge")
-	p:SetAttribute("EdgeId",    edge.id)
-	p:SetAttribute("VertId1",   edge.v1.id)
-	p:SetAttribute("VertId2",   edge.v2.id)
-	p:SetAttribute("NormalX",   worldNormal.X)
-	p:SetAttribute("NormalY",   worldNormal.Y)
-	p:SetAttribute("NormalZ",   worldNormal.Z)
-	p:SetAttribute("TangentX",  worldTangent.X)
-	p:SetAttribute("TangentY",  worldTangent.Y)
-	p:SetAttribute("TangentZ",  worldTangent.Z)
+	p:SetAttribute("ElementId", edge.id)
 	p.Parent = edgeFolder
 end
 
@@ -175,82 +163,79 @@ local function rebuildFaceProxy(face, localToWorld, sourceMaterial)
 	local key = faceKey(face)
 	destroyFaceProxy(key)
 
-	local faceVerts = BMesh.faceVerts(face)
+	local faceVerts = DataStructure.faceVerts(face)
 	local worldPts  = {}
 	for _, v in ipairs(faceVerts) do
 		worldPts[#worldPts + 1] = localToWorld(v.position)
 	end
 	if #worldPts < 3 then return end
 
-	local proxy, em, worldNormal = buildFaceProxy(worldPts)
+	local proxy, em, _ = buildFaceProxy(worldPts)
 	if not proxy then return end
 
 	applyFaceStyle(proxy, face, sourceMaterial)
 	proxy.Name = key
-	proxy:SetAttribute("ProxyType", "Face")
-	proxy:SetAttribute("FaceId",    face.id)
-	local n = #faceVerts
-	proxy:SetAttribute("VertCount", n)
-	for i, v in ipairs(faceVerts) do
-		proxy:SetAttribute("VertId" .. i, v.id)
-	end
-	if worldNormal then
-		proxy:SetAttribute("NormalX", worldNormal.X)
-		proxy:SetAttribute("NormalY", worldNormal.Y)
-		proxy:SetAttribute("NormalZ", worldNormal.Z)
-	end
+	proxy:SetAttribute("ElementId", face.id)
 	proxy.Parent = faceFolder
 	faceEditableMeshes[key] = em
 end
 
 -- ─── Public API ───────────────────────────────────────────────────────────────
 
-function Scene.GetRoot()
+function ProxyManager.GetRoot()
 	return root
 end
 
-function Scene.GetToolHandlesFolder()
-	return ToolHandles.GetFolder()
-end
-
-function Scene.FindProxy(name)
-	for _, folder in ipairs({ vertexFolder, edgeFolder, faceFolder }) do
-		if folder then
-			local p = folder:FindFirstChild(name)
-			if p then return p end
-		end
+-- Find a proxy by element type and ID.
+function ProxyManager.FindProxy(elementType, elementId)
+	local folder
+	if elementType == "Vertex" then
+		folder = vertexFolder
+	elseif elementType == "Edge" then
+		folder = edgeFolder
+	elseif elementType == "Face" then
+		folder = faceFolder
 	end
-	return nil
+	if not folder then return nil end
+	local name
+	if elementType == "Vertex" then
+		name = "Vertex_" .. tostring(elementId)
+	elseif elementType == "Edge" then
+		name = "Edge_" .. tostring(elementId)
+	elseif elementType == "Face" then
+		name = "Face_" .. tostring(elementId)
+	end
+	return name and folder:FindFirstChild(name)
 end
 
--- Rebuild all proxy Parts from Core.bm.
-function Scene.RebuildProxies()
-	if not root or not Core.bm then return end
+-- Rebuild all proxy Parts from RMesh.bm.
+function ProxyManager.RebuildProxies()
+	if not root or not RMesh.bm then return end
 
-	BMesh.computeNormals(Core.bm)
+	DataStructure.computeNormals(RMesh.bm)
 
 	for _, p in ipairs(vertexFolder:GetChildren()) do p.Parent = nil end
 	for _, p in ipairs(edgeFolder:GetChildren())   do p.Parent = nil end
 	for _, p in ipairs(faceFolder:GetChildren())   do p.Parent = nil end
 	faceEditableMeshes = {}
 
-	local localToWorld    = function(p) return Core.LocalToWorld(p) end
-	local localDirToWorld = function(d) return Core.sourceMeshPart.CFrame:VectorToWorldSpace(d) end
-	local sourceMaterial  = Core.sourceMeshPart.Material
+	local localToWorld    = function(p) return RMesh.LocalToWorld(p) end
+	local localDirToWorld = function(d) return RMesh.sourceMeshPart.CFrame:VectorToWorldSpace(d) end
+	local sourceMaterial  = RMesh.sourceMeshPart.Material
 
-	for _, vert in pairs(Core.bm.verts) do
+	for _, vert in pairs(RMesh.bm.verts) do
 		rebuildVertexProxy(vert, localToWorld, localDirToWorld)
 	end
-	for _, edge in pairs(Core.bm.edges) do
+	for _, edge in pairs(RMesh.bm.edges) do
 		rebuildEdgeProxy(edge, localToWorld, localDirToWorld)
 	end
-	for _, face in pairs(Core.bm.faces) do
+	for _, face in pairs(RMesh.bm.faces) do
 		rebuildFaceProxy(face, localToWorld, sourceMaterial)
 	end
 end
 
 -- Set proxy visibility and selectability based on the current geometry mode.
-function Scene.ApplyGeometryMode(mode)
+function ProxyManager.ApplyGeometryMode(mode)
 	if not vertexFolder or not edgeFolder then return end
 
 	for _, p in ipairs(vertexFolder:GetChildren()) do
@@ -268,48 +253,46 @@ function Scene.ApplyGeometryMode(mode)
 	end
 end
 
--- Read face proxy colors back into Core.bm face data before Finalize.
-function Scene.ApplyFaceProxyColors()
-	if not faceFolder or not Core.bm then return end
+-- Read face proxy colors back into RMesh.bm before Finalize.
+function ProxyManager.ApplyFaceProxyColors()
+	if not faceFolder or not RMesh.bm then return end
 	for _, proxy in ipairs(faceFolder:GetChildren()) do
-		if proxy:GetAttribute("ProxyType") == "Face" then
-			local fid  = proxy:GetAttribute("FaceId")
-			local face = fid and Core.bm.faces[fid]
-			if face then
-				face.color        = proxy.Color
-				face.transparency = proxy.Transparency
-			end
+		local fid  = proxy:GetAttribute("ElementId")
+		local face = fid and RMesh.bm.faces[fid]
+		if face then
+			face.color        = proxy.Color
+			face.transparency = proxy.Transparency
 		end
 	end
 end
 
-function Scene.Begin()
-	root          = Instance.new("Folder")
+function ProxyManager.Begin()
+	root           = Instance.new("Folder")
 	root.Name      = "EditObjects"
 	root.Archivable = false
 	root.Parent    = workspace
 
-	vertexFolder          = Instance.new("Folder")
+	vertexFolder           = Instance.new("Folder")
 	vertexFolder.Name      = "VertexProxies"
 	vertexFolder.Archivable = false
 	vertexFolder.Parent    = root
 
-	edgeFolder          = Instance.new("Folder")
+	edgeFolder           = Instance.new("Folder")
 	edgeFolder.Name      = "EdgeProxies"
 	edgeFolder.Archivable = false
 	edgeFolder.Parent    = root
 
-	faceFolder          = Instance.new("Folder")
+	faceFolder           = Instance.new("Folder")
 	faceFolder.Name      = "FaceProxies"
 	faceFolder.Archivable = false
 	faceFolder.Parent    = root
 
-	ToolHandles.Begin(root)
+	HandleManager.Begin(root)
 end
 
-function Scene.Destroy()
+function ProxyManager.Destroy()
 	faceEditableMeshes = {}
-	ToolHandles.Destroy()
+	HandleManager.DestroyFolder()
 	if root then root:Destroy() end
 	root         = nil
 	vertexFolder = nil
@@ -317,4 +300,4 @@ function Scene.Destroy()
 	faceFolder   = nil
 end
 
-return Scene
+return ProxyManager

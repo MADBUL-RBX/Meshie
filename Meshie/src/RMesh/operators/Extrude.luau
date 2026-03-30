@@ -1,6 +1,5 @@
-local Core       = require(script.Parent.Parent.Core)
-local BMesh      = require(script.Parent.Parent.Core.BMesh)
-local Operations = require(script.Parent.Parent.Core.Operations)
+local RMesh         = require(script.Parent.Parent)
+local DataStructure = require(script.Parent.Parent.Core.DataStructure)
 
 local Extrude = {}
 
@@ -9,9 +8,11 @@ local savedBM       = nil
 local startPos      = nil
 local savedCapVerts = nil  -- { { vert = v, initialPos = v.position } }
 
+local EulerOps = require(script.Parent.Parent.Core.EulerOps)
+
 function Extrude.Activate(handle)
 	extrudeResult = nil
-	savedBM       = Operations.cloneBMesh(Core.bm)
+	savedBM       = EulerOps.cloneBMesh(RMesh.bm)
 	startPos      = handle.CFrame.Position
 	savedCapVerts = nil
 end
@@ -25,7 +26,7 @@ end
 
 function Extrude.Cancel()
 	if savedBM then
-		Core.SetBMesh(savedBM)
+		RMesh.SetBMesh(savedBM)
 	end
 	extrudeResult = nil
 	savedBM       = nil
@@ -34,14 +35,14 @@ function Extrude.Cancel()
 end
 
 function Extrude.Apply(handle)
-	if not Core.bm then return false end
+	if not RMesh.bm then return false end
 
 	if not extrudeResult then
-		local fid  = handle:GetAttribute("FaceId")
-		local face = fid and Core.bm.faces[fid]
+		local fid  = handle:GetAttribute("ElementId")
+		local face = fid and RMesh.bm.faces[fid]
 		if not face then return false end
 
-		extrudeResult = Core.ExtrudeFace(face)
+		extrudeResult = RMesh.ExtrudeFace(face)
 		if not extrudeResult then return false end
 
 		savedCapVerts = {}
@@ -49,18 +50,14 @@ function Extrude.Apply(handle)
 			savedCapVerts[#savedCapVerts + 1] = { vert = v, initialPos = v.position }
 		end
 
-		local capVerts = BMesh.faceVerts(extrudeResult.capFace)
-		handle:SetAttribute("FaceId",    extrudeResult.capFace.id)
-		handle:SetAttribute("VertCount", #capVerts)
-		for i, v in ipairs(capVerts) do
-			handle:SetAttribute("VertId" .. i, v.id)
-		end
+		-- Update handle to point at the new cap face
+		handle:SetAttribute("ElementId", extrudeResult.capFace.id)
 	end
 
 	if not savedCapVerts or not startPos then return false end
 
 	local worldDelta = handle.CFrame.Position - startPos
-	Core.ApplyTransformToVerts(savedCapVerts, worldDelta)
+	RMesh.ApplyTransformToVerts(savedCapVerts, worldDelta)
 	return true
 end
 

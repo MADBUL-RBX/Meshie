@@ -12,14 +12,14 @@ local topPanel            = nil
 local settingsTogglePanel = nil
 local settingsPanel       = nil
 local toolRail            = nil
-local operatorPanel       = nil  -- generic operator panel, rebuilt per toolstate
-local geometryPanel       = nil  -- vertex/edge/face mode buttons
+local operatorPanel       = nil
+local geometryPanel       = nil
 
-local geometryButtons     = {}   -- keyed by mode name
+local geometryButtons = {}
 
-local mainButton           = nil
-local uploadButton         = nil
-local settingsButton       = nil
+local mainButton     = nil
+local uploadButton   = nil
+local settingsButton = nil
 
 local titleLabel    = nil
 local modeLabel     = nil
@@ -30,17 +30,15 @@ local noteLabel     = nil
 
 local toolButtons = {}
 
-local onMainAction           = nil
-local onToolState            = nil
-local onUploadAction         = nil
-local onOperatorCommit       = nil
-local onOperatorCancel       = nil
-local onGeometryMode         = nil
+local onMainAction       = nil
+local onToolState        = nil
+local onUploadAction     = nil
+local onOperatorCommit   = nil
+local onOperatorCancel   = nil
+local onGeometryMode     = nil
 
--- Per-toolstate operator panel callbacks
 local onDissolveVertsToggle = nil
-
-local dissolveVertsEnabled = false
+local dissolveVertsEnabled  = false
 
 local function setToolButtonActive(entry, isActive)
 	entry.Button:SetAttribute("IsActive", isActive)

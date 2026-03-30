@@ -39,21 +39,10 @@ function Hotkeys.Start(isEnabledCallback, setToolStateCallback, setGeometryModeC
 	end
 
 	inputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then
-			return
-		end
-
-		if input.UserInputType ~= Enum.UserInputType.Keyboard then
-			return
-		end
-
-		if UserInputService:GetFocusedTextBox() then
-			return
-		end
-
-		if not isEnabledCallback() then
-			return
-		end
+		if gameProcessed then return end
+		if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+		if UserInputService:GetFocusedTextBox() then return end
+		if not isEnabledCallback() then return end
 
 		local toolStateName = keyToToolState[input.KeyCode]
 		if toolStateName then

@@ -4,7 +4,7 @@
 
 local UIConfig = require(script.Parent.UIConfig)
 
-local ACCENT  = Color3.fromRGB(236, 169, 39)  -- matches ButtonActiveColor
+local ACCENT  = Color3.fromRGB(236, 169, 39)
 local DIVIDER = UIConfig.PanelStrokeColor
 
 local NoticePanel = {}
@@ -39,27 +39,23 @@ end
 function NoticePanel.Show(plugin, version, onDismiss)
 	local widgetInfo = DockWidgetPluginGuiInfo.new(
 		Enum.InitialDockState.Float,
-		true,   -- initially enabled
-		true,   -- override previous state
-		420,    -- default width
-		500,    -- default height
-		420,    -- min width
-		400     -- min height
+		true,
+		true,
+		420,
+		500,
+		420,
+		400
 	)
 
 	local widget = plugin:CreateDockWidgetPluginGui("MeshieNotice_" .. version, widgetInfo)
 	widget.Title          = "Welcome to Meshie " .. version
 	widget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-	-- ── Background ────────────────────────────────────────────────────────────
-
 	local bg = Instance.new("Frame")
 	bg.Size             = UDim2.new(1, 0, 1, 0)
 	bg.BackgroundColor3 = UIConfig.PanelColor
 	bg.BorderSizePixel  = 0
 	bg.Parent           = widget
-
-	-- ── Scrollable content ────────────────────────────────────────────────────
 
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size                  = UDim2.new(1, 0, 1, -(UIConfig.MainButtonHeight + UIConfig.Margin * 2))
@@ -82,8 +78,6 @@ function NoticePanel.Show(plugin, version, onDismiss)
 	layout.SortOrder  = Enum.SortOrder.LayoutOrder
 	layout.Padding    = UDim.new(0, UIConfig.Padding)
 	layout.Parent     = scroll
-
-	-- ── Content ───────────────────────────────────────────────────────────────
 
 	local o = 0
 	local function next() o += 1; return o end
@@ -126,8 +120,6 @@ function NoticePanel.Show(plugin, version, onDismiss)
 		"Full documentation and the public GitHub are coming soon. "
 		.. "Check back in a future update!",
 		UIConfig.TextSizeBody, UIConfig.SubTextColor, false, true, next())
-
-	-- ── Dismiss button ────────────────────────────────────────────────────────
 
 	local btnArea = Instance.new("Frame")
 	btnArea.Size             = UDim2.new(1, 0, 0, UIConfig.MainButtonHeight + UIConfig.Margin * 2)
