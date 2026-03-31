@@ -123,6 +123,36 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 	return bm
 end
 
+-- Compute the bounding box center of the EM in mesh local space.
+-- Used to correct the CFrame after ApplyMesh re-centers the geometry.
+local function computeEMCenter(em)
+	local minX, minY, minZ =  math.huge,  math.huge,  math.huge
+	local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
+	for _, vid in ipairs(em:GetVertices()) do
+		local p = em:GetPosition(vid)
+		if p.X < minX then
+			minX = p.X
+		end
+		if p.X > maxX then
+			maxX = p.X
+		end
+		if p.Y < minY then
+			minY = p.Y
+		end
+		if p.Y > maxY then
+			maxY = p.Y
+		end
+		if p.Z < minZ then
+			minZ = p.Z
+		end
+		if p.Z > maxZ then
+			maxZ = p.Z
+		end
+	end
+	if minX == math.huge then return Vector3.zero end
+	return Vector3.new((minX + maxX) * 0.5, (minY + maxY) * 0.5, (minZ + maxZ) * 0.5)
+end
+
 local function rebuildEM(em, bm)
 	for _, fid in ipairs(em:GetFaces()) do em:RemoveFace(fid) end
 	em:RemoveUnused()
@@ -298,10 +328,12 @@ function RMesh:Finalize()
 	end
 
 	local ok, err = pcall(function()
+		local emCenter = computeEMCenter(self.em)
 		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
+		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
 	end)
 	if not ok then
 		warn("[RMesh] Finalize failed:", err)
@@ -311,14 +343,16 @@ end
 -- Apply the current EM state to meshPart without saving topology.
 -- Used by History to keep CHS in sync after each operation.
 function RMesh:ApplyMeshUpdate()
-	local ok, result, content = pcall(function()
+	local ok, content = pcall(function()
 		return AssetService:CreateDataModelContentAsync(Content.fromObject(self.em))
 	end)
 	if ok and content ~= nil then
+		local emCenter = computeEMCenter(self.em)
 		local tempPart = AssetService:CreateMeshPartAsync(content)
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
+		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
 	end
 end
 
