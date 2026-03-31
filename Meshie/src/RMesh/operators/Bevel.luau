@@ -1,50 +1,41 @@
 local EulerOps = require(script.Parent.Parent.Core.EulerOps)
 
 local Bevel = {}
+Bevel.__index = Bevel
 
-local savedBM      = nil
-local startPos     = nil
-local savedEntries = nil  -- { { type, id } } snapshot from Activate
+function Bevel.new()
+	return setmetatable({}, Bevel)
+end
 
 -- entries: { { type, id, part } } — snapshot of selected elements at activate time.
-function Bevel.Activate(rmesh, handle, entries)
-	savedBM      = nil
-	startPos     = nil
-	savedEntries = nil
-
+function Bevel:Activate(rmesh, handle, entries)
 	if not rmesh.bm then return end
 
 	local pt = handle:GetAttribute("ElementType")
 	if pt ~= "Edge" and pt ~= "Vertex" then return end
 
-	startPos     = handle.CFrame.Position
-	savedBM      = EulerOps.cloneBMesh(rmesh.bm)
-	savedEntries = entries
+	self.startPos     = handle.CFrame.Position
+	self.savedBM      = EulerOps.cloneBMesh(rmesh.bm)
+	self.savedEntries = entries
 end
 
-function Bevel.Commit()
-	savedBM      = nil
-	startPos     = nil
-	savedEntries = nil
+function Bevel:Commit()
 end
 
-function Bevel.Cancel(rmesh)
-	if savedBM then
-		rmesh:SetBMesh(savedBM)
+function Bevel:Cancel(rmesh)
+	if self.savedBM then
+		rmesh:SetBMesh(self.savedBM)
 	end
-	savedBM      = nil
-	startPos     = nil
-	savedEntries = nil
 end
 
-function Bevel.Apply(rmesh, handle)
-	if not savedBM or not startPos or not savedEntries then return false end
+function Bevel:Apply(rmesh, handle)
+	if not self.savedBM or not self.startPos or not self.savedEntries then return false end
 
-	local depth   = (handle.CFrame.Position - startPos).Magnitude
-	local freshBM = EulerOps.cloneBMesh(savedBM)
+	local depth   = (handle.CFrame.Position - self.startPos).Magnitude
+	local freshBM = EulerOps.cloneBMesh(self.savedBM)
 
 	if depth > 0 then
-		for _, entry in ipairs(savedEntries) do
+		for _, entry in ipairs(self.savedEntries) do
 			if entry.type == "Edge" then
 				local edge = freshBM.edges[entry.id]
 				if edge then

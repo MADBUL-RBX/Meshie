@@ -30,6 +30,7 @@ local toolbarButton   = nil
 local rmesh          = nil  -- active RMesh instance, or nil when no session
 local pm             = nil  -- active ProxyManager instance, or nil when no session
 local originalParent = nil  -- meshPart's parent before session (restored on end)
+local activeTool     = nil  -- active operator instance, or nil when in SELECT_MODE
 
 -- selectedEntries: { { type, id, part } } — proxies the user has selected.
 local selectedEntries           = {}
@@ -146,12 +147,13 @@ local function commitOperation()
 	unfocusHandle()
 
 	if activeToolState == "Dissolve" then
-		if Dissolve.Execute(rmesh) then
+		if activeTool:Execute(rmesh) then
 			syncScene()
 		end
 	end
 
-	toolstates[activeToolState].Commit()
+	activeTool:Commit()
+	activeTool = nil
 	History.Commit(rmesh)
 
 	HandleManager.StopListening()
@@ -169,7 +171,8 @@ local function cancelOperation()
 	if activeToolState == SELECT_MODE then return end
 	unfocusHandle()
 
-	toolstates[activeToolState].Cancel(rmesh)
+	activeTool:Cancel(rmesh)
+	activeTool = nil
 	History.Cancel()
 
 	HandleManager.StopListening()
@@ -223,8 +226,9 @@ local function activateToolState(name)
 	end
 
 	focusHandle(handle, commitOperation)
+	activeTool = toolstates[name].new()
 	History.StartRecording(rmesh, name)
-	toolstates[name].Activate(rmesh, handle, selectedEntries)
+	activeTool:Activate(rmesh, handle, selectedEntries)
 	HandleManager.BeginListening()
 	HUD.SetOperatorPanel(name)
 	refreshHud()
@@ -247,9 +251,8 @@ end
 -- ─── Handle movement — the core loop ─────────────────────────────────────────
 
 local function onHandleChanged(handle)
-	if not rmesh or activeToolState == SELECT_MODE then return end
-	local tool = toolstates[activeToolState]
-	if tool.Apply(rmesh, handle) then
+	if not rmesh or activeToolState == SELECT_MODE or not activeTool then return end
+	if activeTool:Apply(rmesh, handle) then
 		syncScene()
 		refreshHud()
 	end
