@@ -353,18 +353,10 @@ end
 -- Used by History to keep CHS in sync after each operation.
 function RMesh:ApplyMeshUpdate()
 	local ok, err = pcall(function()
-		local emCenter = computeEMCenter(self.em)
-		if emCenter ~= Vector3.zero then
-			for _, vid in ipairs(self.em:GetVertices()) do
-				self.em:SetPosition(vid, self.em:GetPosition(vid) - emCenter)
-			end
-		end
-
 		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
-		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
 	end)
 	if not ok then
 		warn("[RMesh] ApplyMeshUpdate failed:", err)
