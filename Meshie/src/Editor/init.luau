@@ -8,7 +8,7 @@ local UIConfig         = require(script.Parent.HUD.UIConfig)
 local UserConfig       = require(script.Parent.HUD.UserConfig)
 local Hotkeys          = require(script.Parent.HUD.Hotkeys)
 local RMesh            = require(script.Parent.RMesh)
-local Bridge           = require(script.Bridge)
+local ProxyManager           = require(script.ProxyManager)
 local HandleManager    = require(script.HandleManager)
 local SelectionManager = require(script.Parent.SelectionManager)
 local GeometryMode     = require(script.GeometryMode)
@@ -76,8 +76,8 @@ end
 
 local function syncScene()
 	if not rmesh then return end
-	Bridge.rebuildProxies(rmesh)
-	Bridge.applyGeometryMode(rmesh, GeometryMode.Get())
+	ProxyManager.rebuildProxies(rmesh)
+	ProxyManager.applyGeometryMode(rmesh, GeometryMode.Get())
 end
 
 -- ─── HUD ──────────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ local function commitOperation()
 	activeToolState = SELECT_MODE
 	HUD.SetOperatorPanel(nil)
 	if rmesh then
-		Bridge.applyGeometryMode(rmesh, GeometryMode.Get())
+		ProxyManager.applyGeometryMode(rmesh, GeometryMode.Get())
 	end
 	refreshHud()
 end
@@ -194,7 +194,7 @@ local function activateToolState(name)
 	if activeToolState ~= SELECT_MODE then
 		cancelOperation()
 		-- Re-find the proxy after syncScene rebuilt all proxies.
-		local freshProxy = Bridge.findProxy(rmesh, lastEntry.type, lastEntry.id)
+		local freshProxy = ProxyManager.findProxy(rmesh, lastEntry.type, lastEntry.id)
 		if not freshProxy then return end
 		local freshInfo = getProxyInfo(freshProxy)
 		if not freshInfo then return end
@@ -207,7 +207,7 @@ local function activateToolState(name)
 	local proxy = lastEntry.part
 	-- Re-look up the proxy in case it was rebuilt by cancelOperation above.
 	if not proxy or not proxy.Parent then
-		proxy = Bridge.findProxy(rmesh, lastEntry.type, lastEntry.id)
+		proxy = ProxyManager.findProxy(rmesh, lastEntry.type, lastEntry.id)
 	end
 	if not proxy then
 		activeToolState = SELECT_MODE
@@ -236,7 +236,7 @@ local function setGeometryMode(mode)
 	selectedEntries = {}
 	HandleManager.Clear()
 	if rmesh then
-		Bridge.applyGeometryMode(rmesh, mode)
+		ProxyManager.applyGeometryMode(rmesh, mode)
 	end
 	HUD.SetGeometryMode(mode)
 	refreshHud()
@@ -268,7 +268,7 @@ local function beginSession()
 		return
 	end
 
-	Bridge.init(rmesh)
+	ProxyManager.init(rmesh)
 	History.Begin(rmesh)
 	HandleManager.Begin()
 	HandleManager.Init(onHandleChanged)
@@ -291,8 +291,8 @@ local function endSession()
 	selectedEntries = {}
 
 	local meshPart = rmesh.meshPart
-	Bridge.applyFaceProxyColors(rmesh)
-	Bridge.destroy(rmesh)
+	ProxyManager.applyFaceProxyColors(rmesh)
+	ProxyManager.destroy(rmesh)
 	rmesh:Finalize()
 	rmesh:Destroy()
 	rmesh = nil
