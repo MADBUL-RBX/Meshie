@@ -343,16 +343,16 @@ end
 -- Apply the current EM state to meshPart without saving topology.
 -- Used by History to keep CHS in sync after each operation.
 function RMesh:ApplyMeshUpdate()
-	local ok, content = pcall(function()
-		return AssetService:CreateDataModelContentAsync(Content.fromObject(self.em))
-	end)
-	if ok and content ~= nil then
+	local ok, err = pcall(function()
 		local emCenter = computeEMCenter(self.em)
-		local tempPart = AssetService:CreateMeshPartAsync(content)
+		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
 		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
+	end)
+	if not ok then
+		warn("[RMesh] ApplyMeshUpdate failed:", err)
 	end
 end
 
