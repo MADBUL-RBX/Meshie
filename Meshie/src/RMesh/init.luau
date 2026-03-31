@@ -316,6 +316,19 @@ end
 function RMesh:Finalize()
 	rebuildEM(self.em, self.bm)
 
+	-- Re-center geometry so the pivot of the baked MeshPart sits at the bounding
+	-- box center. Must happen before serializing topology so saved positions match
+	-- the baked EM — otherwise re-editing drifts on load.
+	local emCenter = computeEMCenter(self.em)
+	if emCenter ~= Vector3.zero then
+		for _, vert in pairs(self.bm.verts) do
+			vert.position = vert.position - emCenter
+			if vert.emId then
+				self.em:SetPosition(vert.emId, vert.position)
+			end
+		end
+	end
+
 	local topoJson = serializeTopology(self.bm)
 	local existing = self.meshPart:FindFirstChild("MPETopology")
 	if existing then
@@ -328,16 +341,6 @@ function RMesh:Finalize()
 	end
 
 	local ok, err = pcall(function()
-		-- Re-center EM vertices so the bounding box center sits at the mesh origin.
-		-- Without this, the pivot of the baked MeshPart is off-center when geometry
-		-- extends asymmetrically (e.g. after an extrude).
-		local emCenter = computeEMCenter(self.em)
-		if emCenter ~= Vector3.zero then
-			for _, vid in ipairs(self.em:GetVertices()) do
-				self.em:SetPosition(vid, self.em:GetPosition(vid) - emCenter)
-			end
-		end
-
 		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
