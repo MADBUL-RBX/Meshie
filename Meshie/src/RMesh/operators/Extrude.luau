@@ -1,5 +1,4 @@
-local RMesh         = require(script.Parent.Parent)
-local DataStructure = require(script.Parent.Parent.Core.DataStructure)
+local EulerOps = require(script.Parent.Parent.Core.EulerOps)
 
 local Extrude = {}
 
@@ -8,11 +7,9 @@ local savedBM       = nil
 local startPos      = nil
 local savedCapVerts = nil  -- { { vert = v, initialPos = v.position } }
 
-local EulerOps = require(script.Parent.Parent.Core.EulerOps)
-
-function Extrude.Activate(handle)
+function Extrude.Activate(rmesh, handle, _entries)
 	extrudeResult = nil
-	savedBM       = EulerOps.cloneBMesh(RMesh.bm)
+	savedBM       = EulerOps.cloneBMesh(rmesh.bm)
 	startPos      = handle.CFrame.Position
 	savedCapVerts = nil
 end
@@ -24,9 +21,9 @@ function Extrude.Commit()
 	savedCapVerts = nil
 end
 
-function Extrude.Cancel()
+function Extrude.Cancel(rmesh)
 	if savedBM then
-		RMesh.SetBMesh(savedBM)
+		rmesh:SetBMesh(savedBM)
 	end
 	extrudeResult = nil
 	savedBM       = nil
@@ -34,15 +31,15 @@ function Extrude.Cancel()
 	savedCapVerts = nil
 end
 
-function Extrude.Apply(handle)
-	if not RMesh.bm then return false end
+function Extrude.Apply(rmesh, handle)
+	if not rmesh.bm then return false end
 
 	if not extrudeResult then
 		local fid  = handle:GetAttribute("ElementId")
-		local face = fid and RMesh.bm.faces[fid]
+		local face = fid and rmesh.bm.faces[fid]
 		if not face then return false end
 
-		extrudeResult = RMesh.ExtrudeFace(face)
+		extrudeResult = rmesh:ExtrudeFace(face)
 		if not extrudeResult then return false end
 
 		savedCapVerts = {}
@@ -57,7 +54,7 @@ function Extrude.Apply(handle)
 	if not savedCapVerts or not startPos then return false end
 
 	local worldDelta = handle.CFrame.Position - startPos
-	RMesh.ApplyTransformToVerts(savedCapVerts, worldDelta)
+	rmesh:ApplyTransformToVerts(savedCapVerts, worldDelta)
 	return true
 end
 

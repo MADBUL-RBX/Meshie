@@ -1,81 +1,19 @@
 -- RMesh/init.luau
--- The mesh editing kernel singleton.
--- Single source of truth for all mesh data.
---
--- RMesh.em  (EditableMesh) — NEVER :Destroy(). Nil and let GC.
--- RMesh.bm  (mesh data)    — N-gon half-edge structure over EM.
--- RMesh.sourceMeshPart     — Hidden in ServerStorage during session.
+-- The mesh editing kernel. A library.
+-- RMesh.new(meshPart) → an rmesh instance.
+-- No knowledge of Meshie's session lifecycle, CHS, or Studio plugins.
 
 local AssetService = game:GetService("AssetService")
 local HttpService  = game:GetService("HttpService")
 
 local DataStructure = require(script.Core.DataStructure)
 local EulerOps      = require(script.Core.EulerOps)
+local Bridge        = require(script.Bridge)
 
 local RMesh = {}
+RMesh.__index = RMesh
 
--- ─── State ────────────────────────────────────────────────────────────────────
-
-RMesh.em             = nil
-RMesh.bm             = nil
-RMesh.sourceMeshPart = nil
-local _sourceMeshPartParent = nil
-
--- ─── Private ──────────────────────────────────────────────────────────────────
-
-local function hideSource()
-	_sourceMeshPartParent       = RMesh.sourceMeshPart.Parent
-	RMesh.sourceMeshPart.Parent = game:GetService("ServerStorage")
-end
-
-local function restoreSource()
-	if RMesh.sourceMeshPart and _sourceMeshPartParent then
-		RMesh.sourceMeshPart.Parent = _sourceMeshPartParent
-		_sourceMeshPartParent       = nil
-	end
-end
-
-local function rebuildEM()
-	if not RMesh.bm or not RMesh.em then return end
-
-	for _, fid in ipairs(RMesh.em:GetFaces()) do
-		RMesh.em:RemoveFace(fid)
-	end
-	RMesh.em:RemoveUnused()
-
-	local emIdByVert   = {}
-	local colorIdByKey = {}
-
-	for _, vert in pairs(RMesh.bm.verts) do
-		local vid        = RMesh.em:AddVertex(vert.position)
-		emIdByVert[vert] = vid
-		vert.emId        = vid
-	end
-
-	local function getColorId(face)
-		local ck = tostring(face.color.R) .. "|" .. tostring(face.color.G)
-			.. "|" .. tostring(face.color.B) .. "|" .. tostring(face.transparency)
-		if not colorIdByKey[ck] then
-			colorIdByKey[ck] = RMesh.em:AddColor(face.color, face.transparency)
-		end
-		return colorIdByKey[ck]
-	end
-
-	for _, face in pairs(RMesh.bm.faces) do
-		local verts = DataStructure.faceVerts(face)
-		local n = #verts
-		if n < 3 then continue end
-		local colorId = getColorId(face)
-		for i = 2, n - 1 do
-			local fid = RMesh.em:AddTriangle(emIdByVert[verts[1]], emIdByVert[verts[i]], emIdByVert[verts[i + 1]])
-			RMesh.em:SetFaceColors(fid, { colorId, colorId, colorId })
-			local nid = RMesh.em:AddNormal()
-			RMesh.em:SetFaceNormals(fid, { nid, nid, nid })
-		end
-	end
-end
-
--- ─── MeshIO (absorbed) ────────────────────────────────────────────────────────
+-- ─── Internal: EM ↔ BM conversion ────────────────────────────────────────────
 
 local TOPO_SNAP = 1e4
 local TOPO_TOL  = 0.001
@@ -106,15 +44,12 @@ local function serializeTopology(bm)
 end
 
 local function fromTopology(em, jsonStr, defaultTransparency)
-	local ok, data = pcall(function()
-		return HttpService:JSONDecode(jsonStr)
-	end)
+	local ok, data = pcall(function() return HttpService:JSONDecode(jsonStr) end)
 	if not ok or type(data) ~= "table" then return nil end
 
 	local emVerts = {}
 	for _, vid in ipairs(em:GetVertices()) do
-		local p = em:GetPosition(vid)
-		emVerts[#emVerts + 1] = { id = vid, pos = p }
+		emVerts[#emVerts + 1] = { id = vid, pos = em:GetPosition(vid) }
 	end
 
 	local function findEmId(x, y, z)
@@ -135,27 +70,23 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 	for _, faceData in ipairs(data) do
 		local bmVerts = {}
 		local valid   = true
-
 		for _, pos in ipairs(faceData.v) do
 			local emId = findEmId(pos[1], pos[2], pos[3])
 			if not emId then return nil end
 			if not vertByEmId[emId] then
-				local v   = DataStructure.addVert(bm, em:GetPosition(emId))
-				v.emId    = emId
+				local v      = DataStructure.addVert(bm, em:GetPosition(emId))
+				v.emId       = emId
 				vertByEmId[emId] = v
 			end
 			bmVerts[#bmVerts + 1] = vertByEmId[emId]
 		end
-
 		if not valid or #bmVerts < 3 then return nil end
-
 		local c = faceData.c
 		DataStructure.addFace(bm, bmVerts, {
 			Color        = Color3.new(c[1], c[2], c[3]),
 			Transparency = faceData.t or defaultTransparency,
 		})
 	end
-
 	return bm
 end
 
@@ -180,9 +111,7 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 
 	for _, fid in ipairs(em:GetFaces()) do
 		local vids = em:GetFaceVertices(fid)
-		local v1   = vertById[vids[1]]
-		local v2   = vertById[vids[2]]
-		local v3   = vertById[vids[3]]
+		local v1, v2, v3 = vertById[vids[1]], vertById[vids[2]], vertById[vids[3]]
 		if v1 and v2 and v3 then
 			DataStructure.addFace(bm, { v1, v2, v3 }, {
 				Color        = getColor(fid),
@@ -195,175 +124,231 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 	return bm
 end
 
--- ─── Lifecycle ────────────────────────────────────────────────────────────────
+local function rebuildEM(em, bm)
+	for _, fid in ipairs(em:GetFaces()) do em:RemoveFace(fid) end
+	em:RemoveUnused()
 
-function RMesh.ApplyMeshUpdate(tempPart)
-	if not RMesh.sourceMeshPart or not tempPart then return end
-	local oldScale = RMesh.sourceMeshPart.Size / RMesh.sourceMeshPart.MeshSize
-	RMesh.sourceMeshPart:ApplyMesh(tempPart)
-	RMesh.sourceMeshPart.Size = tempPart.MeshSize * oldScale
+	local emIdByVert   = {}
+	local colorIdByKey = {}
+
+	for _, vert in pairs(bm.verts) do
+		local vid        = em:AddVertex(vert.position)
+		emIdByVert[vert] = vid
+		vert.emId        = vid
+	end
+
+	local function getColorId(face)
+		local ck = tostring(face.color.R) .. "|" .. tostring(face.color.G)
+			.. "|" .. tostring(face.color.B) .. "|" .. tostring(face.transparency)
+		if not colorIdByKey[ck] then
+			colorIdByKey[ck] = em:AddColor(face.color, face.transparency)
+		end
+		return colorIdByKey[ck]
+	end
+
+	for _, face in pairs(bm.faces) do
+		local verts = DataStructure.faceVerts(face)
+		local n = #verts
+		if n < 3 then continue end
+		local colorId = getColorId(face)
+		for i = 2, n - 1 do
+			local fid = em:AddTriangle(emIdByVert[verts[1]], emIdByVert[verts[i]], emIdByVert[verts[i + 1]])
+			em:SetFaceColors(fid, { colorId, colorId, colorId })
+			local nid = em:AddNormal()
+			em:SetFaceNormals(fid, { nid, nid, nid })
+		end
+	end
 end
 
-function RMesh.Finalize()
-	if not RMesh.em or not RMesh.sourceMeshPart then return end
-	rebuildEM()
-	local topoJson = serializeTopology(RMesh.bm)
-	local existing = RMesh.sourceMeshPart:FindFirstChild("MPETopology")
+-- ─── Constructor ──────────────────────────────────────────────────────────────
+
+-- Returns a new RMesh instance, or nil if the mesh could not be loaded.
+function RMesh.new(meshPart)
+	local em
+	local ok, err = pcall(function()
+		em = AssetService:CreateEditableMeshAsync(meshPart.MeshContent, { FixedSize = false })
+	end)
+	if not ok then
+		warn("[RMesh] Could not load mesh:", err)
+		return nil
+	end
+
+	em:MergeVertices(0.001)
+	em:RemoveUnused()
+
+	local ok2, err2 = pcall(function()
+		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(em))
+		meshPart:ApplyMesh(tempPart)
+	end)
+	if not ok2 then
+		warn("[RMesh] Could not link mesh:", err2)
+		em = nil
+		return nil
+	end
+
+	local self        = setmetatable({}, RMesh)
+	self.em           = em
+	self.meshPart     = meshPart
+
+	local topoValue = meshPart:FindFirstChild("MPETopology")
+	if topoValue and topoValue:IsA("StringValue") then
+		local bm = fromTopology(em, topoValue.Value, meshPart.Transparency)
+		if bm then
+			self.bm = bm
+		else
+			warn("[RMesh] fromTopology failed, falling back to dissolvePlanar")
+			self.bm = fromEditableMesh(em, meshPart.Color, meshPart.Transparency)
+		end
+	else
+		self.bm = fromEditableMesh(em, meshPart.Color, meshPart.Transparency)
+	end
+
+	Bridge.init(self)
+
+	return self
+end
+
+-- ─── Coordinate transforms ────────────────────────────────────────────────────
+
+function RMesh:GetScaleFactor()
+	return self.meshPart.Size / self.meshPart.MeshSize
+end
+
+function RMesh:LocalToWorld(localPos)
+	return self.meshPart.CFrame:PointToWorldSpace(localPos * self:GetScaleFactor())
+end
+
+function RMesh:WorldToLocal(worldPos)
+	return self.meshPart.CFrame:PointToObjectSpace(worldPos) / self:GetScaleFactor()
+end
+
+-- ─── EM sync ──────────────────────────────────────────────────────────────────
+
+function RMesh:SyncFromEM()
+	self.bm = fromEditableMesh(self.em, self.meshPart.Color, self.meshPart.Transparency)
+end
+
+function RMesh:SetBMesh(newBM)
+	self.bm = newBM
+	rebuildEM(self.em, self.bm)
+end
+
+-- ─── Mesh mutation ────────────────────────────────────────────────────────────
+
+function RMesh:SetPosition(vert, pos)
+	vert.position = pos
+	if vert.emId then
+		self.em:SetPosition(vert.emId, pos)
+	end
+end
+
+-- savedVerts: { { vert, initialPos } } — snapshot taken at tool Activate.
+-- worldDelta: Vector3 from handle's initial to current world position.
+function RMesh:ApplyTransformToVerts(savedVerts, worldDelta)
+	local localDelta = self.meshPart.CFrame:VectorToObjectSpace(worldDelta) / self:GetScaleFactor()
+	for _, entry in ipairs(savedVerts) do
+		self:SetPosition(entry.vert, entry.initialPos + localDelta)
+	end
+end
+
+function RMesh:ExtrudeFace(face)
+	local result = EulerOps.extrudeFace(self.bm, face)
+	if result then rebuildEM(self.em, self.bm) end
+	return result
+end
+
+function RMesh:DissolveEdge(edge, dissolveVerts)
+	local result = EulerOps.dissolveEdge(self.bm, edge, dissolveVerts)
+	if result then rebuildEM(self.em, self.bm) end
+	return result
+end
+
+function RMesh:SetFaceStyle(face, color, transparency)
+	if color ~= nil then face.color = color end
+	if transparency ~= nil then face.transparency = transparency end
+end
+
+-- ─── Proxies (delegates to Bridge) ───────────────────────────────────────────
+
+function RMesh:SyncProxies()
+	Bridge.rebuildProxies(self)
+end
+
+function RMesh:ApplyGeometryMode(mode)
+	Bridge.applyGeometryMode(self, mode)
+end
+
+function RMesh:ApplyFaceProxyColors()
+	Bridge.applyFaceProxyColors(self)
+end
+
+function RMesh:FindProxy(elementType, elementId)
+	return Bridge.findProxy(self, elementType, elementId)
+end
+
+-- ─── Queries ──────────────────────────────────────────────────────────────────
+
+function RMesh:GetVertexCount()
+	local n = 0
+	for _ in pairs(self.bm.verts) do n += 1 end
+	return n
+end
+
+function RMesh:GetFaceCount()
+	local n = 0
+	for _ in pairs(self.bm.faces) do n += 1 end
+	return n
+end
+
+-- ─── Finalize & Destroy ───────────────────────────────────────────────────────
+
+-- Write the current mesh state back to meshPart.
+-- Bakes collision, applies mesh, saves topology for future sessions.
+function RMesh:Finalize()
+	rebuildEM(self.em, self.bm)
+
+	local topoJson = serializeTopology(self.bm)
+	local existing = self.meshPart:FindFirstChild("MPETopology")
 	if existing then
 		existing.Value = topoJson
 	else
 		local sv = Instance.new("StringValue")
 		sv.Name   = "MPETopology"
 		sv.Value  = topoJson
-		sv.Parent = RMesh.sourceMeshPart
+		sv.Parent = self.meshPart
 	end
-	restoreSource()
-end
-
-function RMesh.End()
-	restoreSource()
-	RMesh.em             = nil
-	RMesh.bm             = nil
-	RMesh.sourceMeshPart = nil
-	_sourceMeshPartParent = nil
-end
-
--- ─── EM ↔ mesh sync ──────────────────────────────────────────────────────────
-
-function RMesh.SyncFromEM()
-	if not RMesh.em or not RMesh.sourceMeshPart then return end
-	RMesh.bm = fromEditableMesh(RMesh.em, RMesh.sourceMeshPart.Color, RMesh.sourceMeshPart.Transparency)
-end
-
-function RMesh.SetBMesh(newBM)
-	RMesh.bm = newBM
-	rebuildEM()
-end
-
--- ─── Coordinate transforms ────────────────────────────────────────────────────
-
-function RMesh.GetScaleFactor()
-	if not RMesh.sourceMeshPart then return Vector3.one end
-	return RMesh.sourceMeshPart.Size / RMesh.sourceMeshPart.MeshSize
-end
-
-function RMesh.LocalToWorld(localPos)
-	return RMesh.sourceMeshPart.CFrame:PointToWorldSpace(localPos * RMesh.GetScaleFactor())
-end
-
-function RMesh.WorldToLocal(worldPos)
-	return RMesh.sourceMeshPart.CFrame:PointToObjectSpace(worldPos) / RMesh.GetScaleFactor()
-end
-
--- ─── Mesh operations ──────────────────────────────────────────────────────────
-
--- savedVerts: { { vert = v, initialPos = v.position } } — snapshot at Activate.
--- worldDelta: Vector3 from handle's initial to current world position.
-function RMesh.ApplyTransformToVerts(savedVerts, worldDelta)
-	if not RMesh.bm or not RMesh.em then return end
-	local localDelta = RMesh.sourceMeshPart.CFrame:VectorToObjectSpace(worldDelta) / RMesh.GetScaleFactor()
-	for _, entry in ipairs(savedVerts) do
-		local newPos = entry.initialPos + localDelta
-		entry.vert.position = newPos
-		if entry.vert.emId then
-			RMesh.em:SetPosition(entry.vert.emId, newPos)
-		end
-	end
-end
-
-function RMesh.ExtrudeFace(face)
-	if not RMesh.bm or not RMesh.em then return nil end
-	local result = EulerOps.extrudeFace(RMesh.bm, face)
-	if result then
-		rebuildEM()
-	end
-	return result
-end
-
-function RMesh.DissolveEdge(edge, dissolveVerts)
-	if not RMesh.bm or not RMesh.em then return nil end
-	local result = EulerOps.dissolveEdge(RMesh.bm, edge, dissolveVerts)
-	if result then
-		rebuildEM()
-	end
-	return result
-end
-
-function RMesh.SetFaceStyle(face, color, transparency)
-	if color ~= nil then
-		face.color = color
-	end
-	if transparency ~= nil then
-		face.transparency = transparency
-	end
-end
-
--- ─── HUD helpers ──────────────────────────────────────────────────────────────
-
-function RMesh.GetVertexCount()
-	if not RMesh.bm then return 0 end
-	local n = 0
-	for _ in pairs(RMesh.bm.verts) do
-		n += 1
-	end
-	return n
-end
-
-function RMesh.GetFaceCount()
-	if not RMesh.bm then return 0 end
-	local n = 0
-	for _ in pairs(RMesh.bm.faces) do
-		n += 1
-	end
-	return n
-end
-
--- ─── Session start ────────────────────────────────────────────────────────────
-
-function RMesh.Begin(meshPart)
-	RMesh.sourceMeshPart  = meshPart
-	_sourceMeshPartParent = meshPart.Parent
 
 	local ok, err = pcall(function()
-		RMesh.em = AssetService:CreateEditableMeshAsync(meshPart.MeshContent, { FixedSize = false })
+		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
+		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
+		self.meshPart:ApplyMesh(tempPart)
+		self.meshPart.Size = tempPart.MeshSize * oldScale
 	end)
 	if not ok then
-		warn("[RMesh] Could not load mesh:", err)
-		RMesh.sourceMeshPart  = nil
-		_sourceMeshPartParent = nil
-		return false
+		warn("[RMesh] Finalize failed:", err)
 	end
+end
 
-	RMesh.em:MergeVertices(0.001)
-	RMesh.em:RemoveUnused()
-
-	local ok2, err2 = pcall(function()
-		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(RMesh.em))
-		meshPart:ApplyMesh(tempPart)
+-- Apply the current EM state to meshPart without saving topology.
+-- Used by History to keep CHS in sync after each operation.
+function RMesh:ApplyMeshUpdate()
+	local ok, result, content = pcall(function()
+		return AssetService:CreateDataModelContentAsync(Content.fromObject(self.em))
 	end)
-	if not ok2 then
-		warn("[RMesh] Could not link mesh:", err2)
-		RMesh.em              = nil
-		RMesh.sourceMeshPart  = nil
-		_sourceMeshPartParent = nil
-		return false
+	if ok and content ~= nil then
+		local tempPart = AssetService:CreateMeshPartAsync(content)
+		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
+		self.meshPart:ApplyMesh(tempPart)
+		self.meshPart.Size = tempPart.MeshSize * oldScale
 	end
+end
 
-	local topoValue = meshPart:FindFirstChild("MPETopology")
-	if topoValue and topoValue:IsA("StringValue") then
-		local bm = fromTopology(RMesh.em, topoValue.Value, meshPart.Transparency)
-		if bm then
-			RMesh.bm = bm
-		else
-			warn("[RMesh] fromTopology failed, falling back to dissolvePlanar")
-			RMesh.bm = fromEditableMesh(RMesh.em, meshPart.Color, meshPart.Transparency)
-		end
-	else
-		RMesh.bm = fromEditableMesh(RMesh.em, meshPart.Color, meshPart.Transparency)
-	end
-
-	hideSource()
-	return true
+-- Destroy proxy instances in the world. EM is GC'd when caller nils the rmesh.
+function RMesh:Destroy()
+	Bridge.destroy(self)
+	self.em       = nil
+	self.bm       = nil
+	self.meshPart = nil
 end
 
 return RMesh

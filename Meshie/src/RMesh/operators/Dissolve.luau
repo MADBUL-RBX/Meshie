@@ -1,4 +1,3 @@
-local RMesh    = require(script.Parent.Parent)
 local EulerOps = require(script.Parent.Parent.Core.EulerOps)
 
 local Dissolve = {}
@@ -7,8 +6,8 @@ local armedEdgeId   = nil
 local dissolveVerts = false
 local savedBM       = nil
 
-function Dissolve.Activate(handle)
-	savedBM       = EulerOps.cloneBMesh(RMesh.bm)
+function Dissolve.Activate(rmesh, handle, _entries)
+	savedBM       = EulerOps.cloneBMesh(rmesh.bm)
 	dissolveVerts = false
 	armedEdgeId   = handle:GetAttribute("ElementId")
 end
@@ -19,9 +18,9 @@ function Dissolve.Commit()
 	savedBM       = nil
 end
 
-function Dissolve.Cancel()
+function Dissolve.Cancel(rmesh)
 	if savedBM then
-		RMesh.SetBMesh(savedBM)
+		rmesh:SetBMesh(savedBM)
 	end
 	armedEdgeId   = nil
 	dissolveVerts = false
@@ -29,7 +28,7 @@ function Dissolve.Cancel()
 end
 
 -- Apply is a no-op for Dissolve — operation is performed by Execute().
-function Dissolve.Apply(_handle)
+function Dissolve.Apply(_rmesh, _handle)
 	return false
 end
 
@@ -38,11 +37,11 @@ function Dissolve.SetDissolveVerts(value)
 end
 
 -- Perform the dissolve. Called by Editor before Commit.
-function Dissolve.Execute()
+function Dissolve.Execute(rmesh)
 	if not armedEdgeId then return false end
-	local edge = RMesh.bm and RMesh.bm.edges[armedEdgeId]
+	local edge = rmesh.bm and rmesh.bm.edges[armedEdgeId]
 	if not edge then return false end
-	local result = RMesh.DissolveEdge(edge, dissolveVerts)
+	local result = rmesh:DissolveEdge(edge, dissolveVerts)
 	return result ~= nil
 end
 

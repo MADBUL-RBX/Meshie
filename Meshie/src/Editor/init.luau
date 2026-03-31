@@ -3,15 +3,12 @@
 -- Owns: tool state, plugin lifecycle, session management.
 -- RMesh is the data brain — all mesh state lives there, not here.
 
-local Selection = game:GetService("Selection")
-
 local HUD              = require(script.Parent.HUD)
 local UIConfig         = require(script.Parent.HUD.UIConfig)
 local UserConfig       = require(script.Parent.HUD.UserConfig)
 local Hotkeys          = require(script.Parent.HUD.Hotkeys)
 local RMesh            = require(script.Parent.RMesh)
-local ProxyManager     = require(script.Parent.RMesh.ProxyManager)
-local HandleManager    = require(script.Parent.RMesh.ProxyManager.HandleManager)
+local HandleManager    = require(script.HandleManager)
 local SelectionManager = require(script.Parent.SelectionManager)
 local GeometryMode     = require(script.GeometryMode)
 local History          = require(script.History)
@@ -28,6 +25,8 @@ local SELECT_MODE     = "Select"
 local enabled         = false
 local activeToolState = SELECT_MODE
 local toolbarButton   = nil
+
+local rmesh = nil  -- active RMesh instance, or nil when no session
 
 -- selectedEntries: { { type, id, part } } — proxies the user has selected.
 local selectedEntries           = {}
@@ -75,19 +74,19 @@ end
 -- ─── Scene sync ───────────────────────────────────────────────────────────────
 
 local function syncScene()
-	if not RMesh.sourceMeshPart then return end
-	ProxyManager.RebuildProxies()
-	ProxyManager.ApplyGeometryMode(GeometryMode.Get())
+	if not rmesh then return end
+	rmesh:SyncProxies()
+	rmesh:ApplyGeometryMode(GeometryMode.Get())
 end
 
 -- ─── HUD ──────────────────────────────────────────────────────────────────────
 
 local function refreshHud()
 	HUD.SetActiveToolState(activeToolState)
-	if RMesh.sourceMeshPart then
+	if rmesh then
 		local status = "Edit"
-			.. "\nVertices: " .. tostring(RMesh.GetVertexCount())
-			.. "\nFaces: "    .. tostring(RMesh.GetFaceCount())
+			.. "\nVertices: " .. tostring(rmesh:GetVertexCount())
+			.. "\nFaces: "    .. tostring(rmesh:GetFaceCount())
 			.. "\nTool: "     .. (if activeToolState == SELECT_MODE then "Select" else activeToolState)
 		HUD.SetMainButtonText("Finalize")
 		HUD.SetStatus(status)
@@ -144,21 +143,21 @@ local function commitOperation()
 	unfocusHandle()
 
 	if activeToolState == "Dissolve" then
-		if Dissolve.Execute() then
+		if Dissolve.Execute(rmesh) then
 			syncScene()
 		end
 	end
 
 	toolstates[activeToolState].Commit()
-	History.Commit()
+	History.Commit(rmesh)
 
 	HandleManager.StopListening()
 	HandleManager.Clear()
 	selectedEntries = {}
 	activeToolState = SELECT_MODE
 	HUD.SetOperatorPanel(nil)
-	if RMesh.sourceMeshPart then
-		ProxyManager.ApplyGeometryMode(GeometryMode.Get())
+	if rmesh then
+		rmesh:ApplyGeometryMode(GeometryMode.Get())
 	end
 	refreshHud()
 end
@@ -167,7 +166,7 @@ local function cancelOperation()
 	if activeToolState == SELECT_MODE then return end
 	unfocusHandle()
 
-	toolstates[activeToolState].Cancel()
+	toolstates[activeToolState].Cancel(rmesh)
 	History.Cancel()
 
 	HandleManager.StopListening()
@@ -175,7 +174,7 @@ local function cancelOperation()
 	selectedEntries = {}
 	activeToolState = SELECT_MODE
 	HUD.SetOperatorPanel(nil)
-	if RMesh.sourceMeshPart then
+	if rmesh then
 		syncScene()
 	end
 	refreshHud()
@@ -184,7 +183,7 @@ end
 -- ─── Tool activation ─────────────────────────────────────────────────────────
 
 local function activateToolState(name)
-	if not RMesh.sourceMeshPart then return end
+	if not rmesh then return end
 	if not toolstates[name] then return end
 	if #selectedEntries == 0 then return end
 
@@ -194,7 +193,7 @@ local function activateToolState(name)
 	if activeToolState ~= SELECT_MODE then
 		cancelOperation()
 		-- Re-find the proxy after syncScene rebuilt all proxies.
-		local freshProxy = ProxyManager.FindProxy(lastEntry.type, lastEntry.id)
+		local freshProxy = rmesh:FindProxy(lastEntry.type, lastEntry.id)
 		if not freshProxy then return end
 		local freshInfo = getProxyInfo(freshProxy)
 		if not freshInfo then return end
@@ -207,7 +206,7 @@ local function activateToolState(name)
 	local proxy = lastEntry.part
 	-- Re-look up the proxy in case it was rebuilt by cancelOperation above.
 	if not proxy or not proxy.Parent then
-		proxy = ProxyManager.FindProxy(lastEntry.type, lastEntry.id)
+		proxy = rmesh:FindProxy(lastEntry.type, lastEntry.id)
 	end
 	if not proxy then
 		activeToolState = SELECT_MODE
@@ -221,8 +220,8 @@ local function activateToolState(name)
 	end
 
 	focusHandle(handle, commitOperation)
-	History.StartRecording(name)
-	toolstates[name].Activate(handle, selectedEntries)
+	History.StartRecording(rmesh, name)
+	toolstates[name].Activate(rmesh, handle, selectedEntries)
 	HandleManager.BeginListening()
 	HUD.SetOperatorPanel(name)
 	refreshHud()
@@ -235,8 +234,8 @@ local function setGeometryMode(mode)
 	GeometryMode.Set(mode)
 	selectedEntries = {}
 	HandleManager.Clear()
-	if RMesh.sourceMeshPart then
-		ProxyManager.ApplyGeometryMode(mode)
+	if rmesh then
+		rmesh:ApplyGeometryMode(mode)
 	end
 	HUD.SetGeometryMode(mode)
 	refreshHud()
@@ -245,9 +244,9 @@ end
 -- ─── Handle movement — the core loop ─────────────────────────────────────────
 
 local function onHandleChanged(handle)
-	if not RMesh.sourceMeshPart or activeToolState == SELECT_MODE then return end
+	if not rmesh or activeToolState == SELECT_MODE then return end
 	local tool = toolstates[activeToolState]
-	if tool.Apply(handle) then
+	if tool.Apply(rmesh, handle) then
 		syncScene()
 		refreshHud()
 	end
@@ -262,13 +261,14 @@ local function beginSession()
 		return
 	end
 
-	if not RMesh.Begin(sel[1]) then
+	rmesh = RMesh.new(sel[1])
+	if not rmesh then
 		refreshHud()
 		return
 	end
-	History.Begin()
 
-	ProxyManager.Begin()
+	History.Begin(rmesh)
+	HandleManager.Begin()
 	HandleManager.Init(onHandleChanged)
 	selectionConn   = SelectionManager.Changed:Connect(onSelectionChanged)
 	selectedEntries = {}
@@ -280,7 +280,7 @@ local function endSession()
 	if activeToolState ~= SELECT_MODE then
 		cancelOperation()
 	end
-	HandleManager.Clear()
+	HandleManager.Destroy()
 
 	if selectionConn then
 		selectionConn:Disconnect()
@@ -288,11 +288,11 @@ local function endSession()
 	end
 	selectedEntries = {}
 
-	local meshPart = RMesh.sourceMeshPart
-	ProxyManager.ApplyFaceProxyColors()
-	ProxyManager.Destroy()
-	RMesh.Finalize()
-	RMesh.End()
+	local meshPart = rmesh.meshPart
+	rmesh:ApplyFaceProxyColors()
+	rmesh:Finalize()
+	rmesh:Destroy()
+	rmesh = nil
 
 	SelectionManager.Set({ meshPart })
 	refreshHud()
@@ -306,9 +306,9 @@ local function enable(_p, button)
 
 	local historyBusy = false
 	local function onHistoryChanged(isRedo)
-		if historyBusy or not RMesh.sourceMeshPart then return end
+		if historyBusy or not rmesh then return end
 		historyBusy = true
-		History.Restore(isRedo)
+		History.Restore(rmesh, isRedo)
 		syncScene()
 		refreshHud()
 		task.defer(function()
@@ -323,7 +323,7 @@ local function enable(_p, button)
 	HUD.Start()
 	HUD.SetToolStates(toolStateItems, SELECT_MODE)
 	HUD.SetMainActionCallback(function()
-		if RMesh.sourceMeshPart then
+		if rmesh then
 			endSession()
 		else
 			beginSession()
@@ -345,13 +345,13 @@ local function enable(_p, button)
 end
 
 local function disable()
-	if RMesh.sourceMeshPart then
+	if rmesh then
 		endSession()
 	end
 
 	History.Unlisten()
 	Hotkeys.Destroy()
-	HandleManager.Clear()
+	HandleManager.Destroy()
 	HUD.SetVisible(false)
 	HUD.Destroy()
 

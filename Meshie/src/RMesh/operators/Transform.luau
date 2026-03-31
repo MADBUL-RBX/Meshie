@@ -1,4 +1,3 @@
-local RMesh         = require(script.Parent.Parent)
 local DataStructure = require(script.Parent.Parent.Core.DataStructure)
 
 local Transform = {}
@@ -7,7 +6,7 @@ local startPos   = nil
 local savedVerts = nil  -- { { vert = v, initialPos = v.position } }
 
 -- entries: { { type, id, part } } — snapshot of selected elements at activate time.
-function Transform.Activate(handle, entries)
+function Transform.Activate(rmesh, handle, entries)
 	startPos   = handle.CFrame.Position
 	savedVerts = {}
 	local seen = {}
@@ -21,14 +20,19 @@ function Transform.Activate(handle, entries)
 
 	for _, entry in ipairs(entries) do
 		if entry.type == "Vertex" then
-			addVert(RMesh.bm.verts[entry.id])
+			addVert(rmesh.bm.verts[entry.id])
 		elseif entry.type == "Edge" then
-			local e = RMesh.bm.edges[entry.id]
-			if e then addVert(e.v1); addVert(e.v2) end
+			local e = rmesh.bm.edges[entry.id]
+			if e then
+				addVert(e.v1)
+				addVert(e.v2)
+			end
 		elseif entry.type == "Face" then
-			local f = RMesh.bm.faces[entry.id]
+			local f = rmesh.bm.faces[entry.id]
 			if f then
-				for _, v in ipairs(DataStructure.faceVerts(f)) do addVert(v) end
+				for _, v in ipairs(DataStructure.faceVerts(f)) do
+					addVert(v)
+				end
 			end
 		end
 	end
@@ -39,12 +43,12 @@ function Transform.Commit()
 	savedVerts = nil
 end
 
-function Transform.Cancel()
-	if savedVerts and RMesh.bm and RMesh.em then
+function Transform.Cancel(rmesh)
+	if savedVerts and rmesh.bm and rmesh.em then
 		for _, entry in ipairs(savedVerts) do
 			entry.vert.position = entry.initialPos
 			if entry.vert.emId then
-				RMesh.em:SetPosition(entry.vert.emId, entry.initialPos)
+				rmesh.em:SetPosition(entry.vert.emId, entry.initialPos)
 			end
 		end
 	end
@@ -52,10 +56,10 @@ function Transform.Cancel()
 	savedVerts = nil
 end
 
-function Transform.Apply(handle)
+function Transform.Apply(rmesh, handle)
 	if not startPos or not savedVerts or #savedVerts == 0 then return false end
 	local worldDelta = handle.CFrame.Position - startPos
-	RMesh.ApplyTransformToVerts(savedVerts, worldDelta)
+	rmesh:ApplyTransformToVerts(savedVerts, worldDelta)
 	return true
 end
 

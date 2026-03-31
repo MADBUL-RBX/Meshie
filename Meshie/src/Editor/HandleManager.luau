@@ -1,32 +1,40 @@
 -- HandleManager.luau
 -- Owns the single active handle and its CFrame/Size signal connections.
--- Absorbs ToolHandles — all handle Instance management lives here.
+-- Studio-specific: creates handle Parts, listens to axis-drag changes.
 
 local HandleManager = {}
 
-local folder      = nil
+local folder       = nil
 local activeHandle = nil
-local connection  = nil
-local onChanged   = nil
-
--- ─── Handle folder ────────────────────────────────────────────────────────────
-
-function HandleManager.Begin(parent)
-	if folder then folder:Destroy() end
-	folder        = Instance.new("Folder")
-	folder.Name   = "ToolHandles"
-	folder.Parent = parent
-end
-
-function HandleManager.DestroyFolder()
-	if folder then folder:Destroy(); folder = nil end
-end
+local connection   = nil
+local onChanged    = nil
 
 -- ─── Lifecycle ────────────────────────────────────────────────────────────────
 
+-- Create the handle folder. Call at session start.
+function HandleManager.Begin()
+	if folder then folder:Destroy() end
+	folder            = Instance.new("Folder")
+	folder.Name       = "ToolHandles"
+	folder.Archivable = false
+	folder.Parent     = workspace
+end
+
+-- Set the callback fired on every handle CFrame/Size change.
 function HandleManager.Init(callback)
 	onChanged = callback
 end
+
+-- Destroy folder and active handle. Call at session end.
+function HandleManager.Destroy()
+	HandleManager.Clear()
+	if folder then
+		folder:Destroy()
+		folder = nil
+	end
+end
+
+-- ─── Handle creation ──────────────────────────────────────────────────────────
 
 -- Create a handle from a proxy Part.
 -- elementType ("Vertex"/"Edge"/"Face") is stamped on the handle for operators.
@@ -54,6 +62,8 @@ function HandleManager.Arm(proxy, elementType)
 	return handle
 end
 
+-- ─── Listening ────────────────────────────────────────────────────────────────
+
 function HandleManager.BeginListening()
 	if not activeHandle then return end
 	HandleManager.StopListening()
@@ -75,6 +85,8 @@ function HandleManager.StopListening()
 	end
 end
 
+-- ─── Clear ────────────────────────────────────────────────────────────────────
+
 function HandleManager.Clear()
 	HandleManager.StopListening()
 	if activeHandle then
@@ -85,10 +97,6 @@ end
 
 function HandleManager.GetHandle()
 	return activeHandle
-end
-
-function HandleManager.HasHandle()
-	return activeHandle ~= nil
 end
 
 return HandleManager
