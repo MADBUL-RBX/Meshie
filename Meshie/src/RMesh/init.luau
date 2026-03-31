@@ -343,7 +343,6 @@ function RMesh:Finalize()
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
 		-- Compensate the CFrame so the mesh stays in the same world position.
-		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
 	end)
 	if not ok then
 		warn("[RMesh] Finalize failed:", err)
@@ -365,7 +364,6 @@ function RMesh:ApplyMeshUpdate()
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
-		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
 	end)
 	if not ok then
 		warn("[RMesh] ApplyMeshUpdate failed:", err)
