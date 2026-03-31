@@ -1,5 +1,3 @@
-local DataStructure = require(script.Parent.Parent.Core.DataStructure)
-
 local Transform = {}
 
 local startPos   = nil
@@ -30,7 +28,7 @@ function Transform.Activate(rmesh, handle, entries)
 		elseif entry.type == "Face" then
 			local f = rmesh.bm.faces[entry.id]
 			if f then
-				for _, v in ipairs(DataStructure.faceVerts(f)) do
+				for _, v in ipairs(rmesh.bm:faceVerts(f)) do
 					addVert(v)
 				end
 			end

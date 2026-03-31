@@ -6,8 +6,8 @@
 local AssetService = game:GetService("AssetService")
 local HttpService  = game:GetService("HttpService")
 
-local DataStructure = require(script.Core.DataStructure)
-local EulerOps      = require(script.Core.EulerOps)
+local Data     = require(script.Core.Data)
+local EulerOps = require(script.Core.EulerOps)
 
 local RMesh = {}
 RMesh.__index = RMesh
@@ -28,7 +28,7 @@ end
 local function serializeTopology(bm)
 	local faces = {}
 	for _, face in pairs(bm.faces) do
-		local verts = DataStructure.faceVerts(face)
+		local verts = bm:faceVerts(face)
 		local positions = {}
 		for _, v in ipairs(verts) do
 			positions[#positions + 1] = snapV(v.position)
@@ -63,7 +63,7 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 		return nil
 	end
 
-	local bm         = DataStructure.new()
+	local bm         = Data.new()
 	local vertByEmId = {}
 
 	for _, faceData in ipairs(data) do
@@ -73,7 +73,7 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 			local emId = findEmId(pos[1], pos[2], pos[3])
 			if not emId then return nil end
 			if not vertByEmId[emId] then
-				local v      = DataStructure.addVert(bm, em:GetPosition(emId))
+				local v      = bm:addVert(em:GetPosition(emId))
 				v.emId       = emId
 				vertByEmId[emId] = v
 			end
@@ -81,7 +81,7 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 		end
 		if not valid or #bmVerts < 3 then return nil end
 		local c = faceData.c
-		DataStructure.addFace(bm, bmVerts, {
+		bm:addFace(bmVerts, {
 			Color        = Color3.new(c[1], c[2], c[3]),
 			Transparency = faceData.t or defaultTransparency,
 		})
@@ -90,11 +90,11 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 end
 
 local function fromEditableMesh(em, defaultColor, defaultTransparency)
-	local bm       = DataStructure.new()
+	local bm       = Data.new()
 	local vertById = {}
 
 	for _, vid in ipairs(em:GetVertices()) do
-		local v       = DataStructure.addVert(bm, em:GetPosition(vid))
+		local v       = bm:addVert(em:GetPosition(vid))
 		v.emId        = vid
 		vertById[vid] = v
 	end
@@ -112,7 +112,7 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 		local vids = em:GetFaceVertices(fid)
 		local v1, v2, v3 = vertById[vids[1]], vertById[vids[2]], vertById[vids[3]]
 		if v1 and v2 and v3 then
-			DataStructure.addFace(bm, { v1, v2, v3 }, {
+			bm:addFace({ v1, v2, v3 }, {
 				Color        = getColor(fid),
 				Transparency = defaultTransparency,
 			})
@@ -146,7 +146,7 @@ local function rebuildEM(em, bm)
 	end
 
 	for _, face in pairs(bm.faces) do
-		local verts = DataStructure.faceVerts(face)
+		local verts = bm:faceVerts(face)
 		local n = #verts
 		if n < 3 then continue end
 		local colorId = getColorId(face)
@@ -185,9 +185,9 @@ function RMesh.new(meshPart)
 		return nil
 	end
 
-	local self        = setmetatable({}, RMesh)
-	self.em           = em
-	self.meshPart     = meshPart
+	local self    = setmetatable({}, RMesh)
+	self.em       = em
+	self.meshPart = meshPart
 
 	local topoValue = meshPart:FindFirstChild("MPETopology")
 	if topoValue and topoValue:IsA("StringValue") then

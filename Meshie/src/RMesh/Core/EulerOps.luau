@@ -2,7 +2,7 @@
 -- Pure mesh mutation operations.
 -- No knowledge of EditableMesh, proxies, or scene state.
 
-local DataStructure = require(script.Parent.DataStructure)
+local Data = require(script.Parent.Data)
 
 local EulerOps = {}
 
@@ -17,7 +17,7 @@ end
 -- Deep clone a mesh preserving all element IDs.
 -- Critical for bevel snapshot/restore — IDs must match so lookups work.
 function EulerOps.cloneBMesh(bm)
-	local c = DataStructure.new()
+	local c = Data.new()
 	c._nextVertId = bm._nextVertId
 	c._nextEdgeId = bm._nextEdgeId
 	c._nextFaceId = bm._nextFaceId
@@ -27,13 +27,13 @@ function EulerOps.cloneBMesh(bm)
 	end
 
 	for _, face in pairs(bm.faces) do
-		local origVerts = DataStructure.faceVerts(face)
+		local origVerts  = bm:faceVerts(face)
 		local cloneVerts = {}
 		for _, v in ipairs(origVerts) do
 			cloneVerts[#cloneVerts + 1] = c.verts[v.id]
 		end
-		local newFace = DataStructure.addFace(c, cloneVerts, {
-			Color = face.color,
+		local newFace = c:addFace(cloneVerts, {
+			Color        = face.color,
 			Transparency = face.transparency,
 		})
 		c.faces[newFace.id] = nil
@@ -81,7 +81,7 @@ end
 -- ─── Dissolve ─────────────────────────────────────────────────────────────────
 
 function EulerOps.dissolveEdge(bm, edge, dissolveVerts)
-	local faces = DataStructure.edgeFaces(edge)
+	local faces = bm:edgeFaces(edge)
 	if #faces ~= 2 then
 		return nil
 	end
@@ -112,29 +112,29 @@ function EulerOps.dissolveEdge(bm, edge, dissolveVerts)
 		return nil
 	end
 
-	DataStructure.removeFace(bm, faceA)
-	DataStructure.removeFace(bm, faceB)
-	local merged = DataStructure.addFace(bm, mergedVerts, style)
+	bm:removeFace(faceA)
+	bm:removeFace(faceB)
+	local merged = bm:addFace(mergedVerts, style)
 
 	if dissolveVerts then
 		for _, vert in ipairs({ VA, VB }) do
-			local vertEdges = DataStructure.vertEdges(vert)
+			local vertEdges = bm:vertEdges(vert)
 			if #vertEdges == 2 then
-				local vertFaces = DataStructure.vertFaces(vert)
+				local vertFaces = bm:vertFaces(vert)
 				local coplanar = true
 				if #vertFaces >= 2 then
-					local n1 = DataStructure.faceNormal(vertFaces[1])
+					local n1 = bm:faceNormal(vertFaces[1])
 					for i = 2, #vertFaces do
-						if n1:Dot(DataStructure.faceNormal(vertFaces[i])) < 0.999 then
+						if n1:Dot(bm:faceNormal(vertFaces[i])) < 0.999 then
 							coplanar = false
 							break
 						end
 					end
 				end
 				if coplanar then
-					local adjFaces = DataStructure.vertFaces(vert)
+					local adjFaces = bm:vertFaces(vert)
 					for _, f in ipairs(adjFaces) do
-						local oldVerts = DataStructure.faceVerts(f)
+						local oldVerts = bm:faceVerts(f)
 						local newVerts = {}
 						for _, v in ipairs(oldVerts) do
 							if v ~= vert then
@@ -142,12 +142,12 @@ function EulerOps.dissolveEdge(bm, edge, dissolveVerts)
 							end
 						end
 						local fStyle = { Color = f.color, Transparency = f.transparency }
-						DataStructure.removeFace(bm, f)
+						bm:removeFace(f)
 						if #newVerts >= 3 then
-							DataStructure.addFace(bm, newVerts, fStyle)
+							bm:addFace(newVerts, fStyle)
 						end
 					end
-					DataStructure.removeVert(bm, vert)
+					bm:removeVert(vert)
 				end
 			end
 		end
@@ -159,16 +159,16 @@ end
 -- ─── Extrude ──────────────────────────────────────────────────────────────────
 
 function EulerOps.extrudeFace(bm, face)
-	local baseVerts = DataStructure.faceVerts(face)
+	local baseVerts = bm:faceVerts(face)
 	local n = #baseVerts
 	local style = { Color = face.color, Transparency = face.transparency }
 
 	local capVerts = {}
 	for _, v in ipairs(baseVerts) do
-		capVerts[#capVerts + 1] = DataStructure.addVert(bm, v.position)
+		capVerts[#capVerts + 1] = bm:addVert(v.position)
 	end
 
-	DataStructure.removeFace(bm, face)
+	bm:removeFace(face)
 
 	local sideFaces = {}
 	for i = 1, n do
@@ -176,14 +176,14 @@ function EulerOps.extrudeFace(bm, face)
 		local b2 = baseVerts[(i % n) + 1]
 		local c1 = capVerts[i]
 		local c2 = capVerts[(i % n) + 1]
-		sideFaces[#sideFaces + 1] = DataStructure.addFace(bm, { b1, b2, c2, c1 }, style)
+		sideFaces[#sideFaces + 1] = bm:addFace({ b1, b2, c2, c1 }, style)
 	end
 
-	local capFace = DataStructure.addFace(bm, capVerts, style)
+	local capFace = bm:addFace(capVerts, style)
 
 	return {
-		capFace = capFace,
-		capVerts = capVerts,
+		capFace   = capFace,
+		capVerts  = capVerts,
 		baseVerts = baseVerts,
 		sideFaces = sideFaces,
 	}
@@ -193,7 +193,7 @@ end
 
 function EulerOps.bevelEdge(bm, edge, depth)
 	if depth <= 0 then return nil end
-	local adjFaces = DataStructure.edgeFaces(edge)
+	local adjFaces = bm:edgeFaces(edge)
 	if #adjFaces ~= 2 then return nil end
 
 	local VA = edge.v1
@@ -201,8 +201,8 @@ function EulerOps.bevelEdge(bm, edge, depth)
 	local posA = VA.position
 	local posB = VB.position
 
-	local facesForVA = DataStructure.vertFaces(VA)
-	local facesForVB = DataStructure.vertFaces(VB)
+	local facesForVA = bm:vertFaces(VA)
+	local facesForVB = bm:vertFaces(VB)
 
 	local loopInF1 = (edge.loop.face == adjFaces[1]) and edge.loop or edge.loop.radial_next
 	local edgeStartIsVA = (loopInF1.vert == VA)
@@ -213,7 +213,7 @@ function EulerOps.bevelEdge(bm, edge, depth)
 	local newVB = {}
 
 	local function makeRetracted(origVert, origPos, otherVert, face)
-		local fv = DataStructure.faceVerts(face)
+		local fv = bm:faceVerts(face)
 		local fn = #fv
 		local neighbor = nil
 		for i, v in ipairs(fv) do
@@ -227,7 +227,7 @@ function EulerOps.bevelEdge(bm, edge, depth)
 		if not neighbor then return nil end
 		local dir = neighbor.position - origPos
 		local d = math.min(depth, dir.Magnitude)
-		return DataStructure.addVert(bm, origPos + safeUnit(dir) * d)
+		return bm:addVert(origPos + safeUnit(dir) * d)
 	end
 
 	for _, f in ipairs(facesForVA) do
@@ -250,7 +250,7 @@ function EulerOps.bevelEdge(bm, edge, depth)
 
 	local snapshots = {}
 	for _, f in ipairs(rebuilt) do
-		snapshots[f.id] = DataStructure.faceVerts(f)
+		snapshots[f.id] = bm:faceVerts(f)
 	end
 
 	for _, f in ipairs(rebuilt) do
@@ -294,8 +294,8 @@ function EulerOps.bevelEdge(bm, edge, depth)
 			end
 		end
 
-		DataStructure.removeFace(bm, f)
-		DataStructure.addFace(bm, newVerts, style)
+		bm:removeFace(f)
+		bm:addFace(newVerts, style)
 	end
 
 	local nVA1 = newVA[adjFaces[1].id]
@@ -307,12 +307,16 @@ function EulerOps.bevelEdge(bm, edge, depth)
 
 	if nVA1 and nVA2 and nVB1 and nVB2 then
 		local stripVerts = if edgeStartIsVA then { nVA1, nVA2, nVB2, nVB1 } else { nVB1, nVB2, nVA2, nVA1 }
-		DataStructure.addFace(bm, stripVerts, stripStyle)
+		bm:addFace(stripVerts, stripStyle)
 	end
 
-	if not VA.edge then DataStructure.removeVert(bm, VA) end
-	if not VB.edge then DataStructure.removeVert(bm, VB) end
-	DataStructure.removeOrphanedVerts(bm)
+	if not VA.edge then
+		bm:removeVert(VA)
+	end
+	if not VB.edge then
+		bm:removeVert(VB)
+	end
+	bm:removeOrphanedVerts()
 
 	return true
 end
@@ -323,10 +327,10 @@ function EulerOps.bevelVertex(bm, vert, depth)
 	if depth <= 0 then return nil end
 	if not vert.edge then return nil end
 
-	local pos = vert.position
-	local normal = DataStructure.vertNormal(vert)
-	local edges = DataStructure.vertEdges(vert)
-	local adjFaces = DataStructure.vertFaces(vert)
+	local pos      = vert.position
+	local normal   = bm:vertNormal(vert)
+	local edges    = bm:vertEdges(vert)
+	local adjFaces = bm:vertFaces(vert)
 
 	if #edges < 2 then return nil end
 
@@ -335,11 +339,11 @@ function EulerOps.bevelVertex(bm, vert, depth)
 		local nb = if e.v1 == vert then e.v2 else e.v1
 		local dir = nb.position - pos
 		local d = math.min(depth, if dir.Magnitude > 0 then dir.Magnitude * 0.49 else depth)
-		newByEdge[e.id] = DataStructure.addVert(bm, pos + safeUnit(dir) * d)
+		newByEdge[e.id] = bm:addVert(pos + safeUnit(dir) * d)
 	end
 
 	for _, f in ipairs(adjFaces) do
-		local oldVerts = DataStructure.faceVerts(f)
+		local oldVerts = bm:faceVerts(f)
 		local style = { Color = f.color, Transparency = f.transparency }
 		local newVerts = {}
 		local fn = #oldVerts
@@ -359,8 +363,8 @@ function EulerOps.bevelVertex(bm, vert, depth)
 				newVerts[#newVerts + 1] = v
 			end
 		end
-		DataStructure.removeFace(bm, f)
-		DataStructure.addFace(bm, newVerts, style)
+		bm:removeFace(f)
+		bm:addFace(newVerts, style)
 	end
 
 	local capVerts = {}
@@ -387,11 +391,11 @@ function EulerOps.bevelVertex(bm, vert, depth)
 		end
 	end
 
-	DataStructure.removeVert(bm, vert)
+	bm:removeVert(vert)
 
 	if #capVerts >= 3 then
 		local style = adjFaces[1] and { Color = adjFaces[1].color, Transparency = adjFaces[1].transparency }
-		DataStructure.addFace(bm, capVerts, style)
+		bm:addFace(capVerts, style)
 	end
 
 	return true
@@ -403,9 +407,9 @@ function EulerOps.dissolvePlanar(bm, threshold)
 	threshold = threshold or 0.999
 	local candidates = {}
 	for _, edge in pairs(bm.edges) do
-		local faces = DataStructure.edgeFaces(edge)
+		local faces = bm:edgeFaces(edge)
 		if #faces == 2 then
-			local dot = DataStructure.faceNormal(faces[1]):Dot(DataStructure.faceNormal(faces[2]))
+			local dot = bm:faceNormal(faces[1]):Dot(bm:faceNormal(faces[2]))
 			if dot >= threshold then
 				candidates[#candidates + 1] = { edge = edge, score = dot }
 			end

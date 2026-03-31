@@ -7,8 +7,7 @@
 
 local AssetService = game:GetService("AssetService")
 
-local DataStructure = require(script.Parent.Parent.RMesh.Core.DataStructure)
-local UserConfig    = require(script.Parent.Parent.HUD.UserConfig)
+local UserConfig = require(script.Parent.Parent.HUD.UserConfig)
 
 local ProxyManager = {}
 ProxyManager.__index = ProxyManager
@@ -147,7 +146,7 @@ local function rebuildFaceProxy(self, face)
 	end
 	self.faceEMs[key] = nil
 
-	local faceVerts = DataStructure.faceVerts(face)
+	local faceVerts = self.rmesh.bm:faceVerts(face)
 	local worldPts  = {}
 	for _, v in ipairs(faceVerts) do
 		worldPts[#worldPts + 1] = self.rmesh:LocalToWorld(v.position)
@@ -201,7 +200,7 @@ end
 function ProxyManager:rebuild()
 	if not self.rmesh.bm then return end
 
-	DataStructure.computeNormals(self.rmesh.bm)
+	self.rmesh.bm:computeNormals()
 
 	for _, p in ipairs(self.vertexFolder:GetChildren()) do
 		p.Parent = nil

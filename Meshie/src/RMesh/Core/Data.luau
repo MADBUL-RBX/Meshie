@@ -1,4 +1,4 @@
--- DataStructure.luau
+-- Data.luau
 -- Half-edge mesh data structure, modelled after Blender's BMesh.
 -- Elements: Vert, Edge, Face, Loop.
 --
@@ -9,39 +9,38 @@
 --
 -- All adjacency queries are O(valence) pointer follows, no linear scans.
 
-local DataStructure = {}
+local Data = {}
+Data.__index = Data
 
--- ─── Construction ─────────────────────────────────────────────────────────────
+-- ─── Constructor ──────────────────────────────────────────────────────────────
 
-function DataStructure.new()
-	return {
-		verts = {},
-		edges = {},
-		faces = {},
+function Data.new()
+	return setmetatable({
+		verts       = {},
+		edges       = {},
+		faces       = {},
 		_nextVertId = 1,
 		_nextEdgeId = 1,
 		_nextFaceId = 1,
-	}
+	}, Data)
 end
 
 -- ─── Element creation ─────────────────────────────────────────────────────────
 
-function DataStructure.addVert(bm, position)
-	local id = bm._nextVertId
-	bm._nextVertId += 1
+function Data:addVert(position)
+	local id = self._nextVertId
+	self._nextVertId += 1
 	local vert = { id = id, position = position, edge = nil }
-	bm.verts[id] = vert
+	self.verts[id] = vert
 	return vert
 end
 
 -- ─── Disk cycle (vert ↔ edge) ─────────────────────────────────────────────────
 
--- Returns the disk link table for `edge` at vertex `vert`.
 local function diskLink(edge, vert)
 	return if vert == edge.v1 then edge.v1_disk else edge.v2_disk
 end
 
--- Insert `edge` into `vert`'s disk cycle.
 local function diskAppend(edge, vert)
 	local link = diskLink(edge, vert)
 	if not vert.edge then
@@ -60,7 +59,6 @@ local function diskAppend(edge, vert)
 	end
 end
 
--- Remove `edge` from `vert`'s disk cycle.
 local function diskRemove(edge, vert)
 	local link = diskLink(edge, vert)
 	if link.next == edge then
@@ -82,15 +80,15 @@ end
 
 local function radialAppend(edge, loop)
 	if not edge.loop then
-		edge.loop       = loop
+		edge.loop        = loop
 		loop.radial_next = loop
 		loop.radial_prev = loop
 	else
-		local existing     = edge.loop
-		local existingNext = existing.radial_next
-		existing.radial_next  = loop
-		loop.radial_prev      = existing
-		loop.radial_next      = existingNext
+		local existing      = edge.loop
+		local existingNext  = existing.radial_next
+		existing.radial_next    = loop
+		loop.radial_prev        = existing
+		loop.radial_next        = existingNext
 		existingNext.radial_prev = loop
 	end
 end
@@ -109,56 +107,9 @@ local function radialRemove(edge, loop)
 	loop.radial_prev = nil
 end
 
--- ─── Face creation ────────────────────────────────────────────────────────────
+-- ─── Private edge helper ──────────────────────────────────────────────────────
 
--- verts: ordered array of Vert (3+)
--- style: { Color, Transparency } optional
-function DataStructure.addFace(bm, verts, style)
-	assert(#verts >= 3, "DataStructure.addFace: need at least 3 verts")
-	local id = bm._nextFaceId
-	bm._nextFaceId += 1
-	local face = {
-		id           = id,
-		loop         = nil,
-		color        = (style and style.Color)        or Color3.new(1, 1, 1),
-		transparency = (style and style.Transparency) or 0,
-	}
-	bm.faces[id] = face
-
-	local n     = #verts
-	local loops = table.create(n)
-	for i = 1, n do
-		loops[i] = {
-			vert        = verts[i],
-			edge        = nil,
-			face        = face,
-			next        = nil,
-			prev        = nil,
-			radial_next = nil,
-			radial_prev = nil,
-		}
-	end
-
-	for i = 1, n do
-		loops[i].next = loops[(i % n) + 1]
-		loops[i].prev = loops[((i - 2) % n) + 1]
-	end
-
-	for i = 1, n do
-		local loop = loops[i]
-		local vA   = verts[i]
-		local vB   = verts[(i % n) + 1]
-		local edge = DataStructure._getOrCreateEdge(bm, vA, vB)
-		loop.edge  = edge
-		radialAppend(edge, loop)
-	end
-
-	face.loop = loops[1]
-	return face
-end
-
-function DataStructure._getOrCreateEdge(bm, v1, v2)
-	-- Check existing edges via disk — O(valence), no full scan.
+local function getOrCreateEdge(bm, v1, v2)
 	if v1.edge then
 		local start = v1.edge
 		local e     = start
@@ -185,33 +136,88 @@ function DataStructure._getOrCreateEdge(bm, v1, v2)
 	return edge
 end
 
--- ─── Face removal ─────────────────────────────────────────────────────────────
+-- ─── Face creation ────────────────────────────────────────────────────────────
 
-function DataStructure.removeFace(bm, face)
-	local loops = DataStructure.faceLoops(face)
+-- verts: ordered array of Vert (3+)
+-- style: { Color, Transparency } optional
+function Data:addFace(verts, style)
+	assert(#verts >= 3, "Data:addFace: need at least 3 verts")
+	local id = self._nextFaceId
+	self._nextFaceId += 1
+	local face = {
+		id           = id,
+		loop         = nil,
+		color        = (style and style.Color)        or Color3.new(1, 1, 1),
+		transparency = (style and style.Transparency) or 0,
+	}
+	self.faces[id] = face
+
+	local n     = #verts
+	local loops = table.create(n)
+	for i = 1, n do
+		loops[i] = {
+			vert        = verts[i],
+			edge        = nil,
+			face        = face,
+			next        = nil,
+			prev        = nil,
+			radial_next = nil,
+			radial_prev = nil,
+		}
+	end
+
+	for i = 1, n do
+		loops[i].next = loops[(i % n) + 1]
+		loops[i].prev = loops[((i - 2) % n) + 1]
+	end
+
+	for i = 1, n do
+		local loop = loops[i]
+		local vA   = verts[i]
+		local vB   = verts[(i % n) + 1]
+		local edge = getOrCreateEdge(self, vA, vB)
+		loop.edge  = edge
+		radialAppend(edge, loop)
+	end
+
+	face.loop = loops[1]
+	return face
+end
+
+-- ─── Face/vert removal ────────────────────────────────────────────────────────
+
+function Data:removeFace(face)
+	local loops = self:faceLoops(face)
 
 	for _, l in ipairs(loops) do
 		if l.radial_next == l then
-			-- Last face using this edge — remove it entirely.
 			diskRemove(l.edge, l.edge.v1)
 			diskRemove(l.edge, l.edge.v2)
-			l.edge.loop    = nil
-			bm.edges[l.edge.id] = nil
+			l.edge.loop         = nil
+			self.edges[l.edge.id] = nil
 		else
 			radialRemove(l.edge, l)
 		end
 	end
 
-	bm.faces[face.id] = nil
+	self.faces[face.id] = nil
 end
 
-function DataStructure.removeVert(bm, vert)
-	bm.verts[vert.id] = nil
+function Data:removeVert(vert)
+	self.verts[vert.id] = nil
+end
+
+function Data:removeOrphanedVerts()
+	for id, vert in pairs(self.verts) do
+		if not vert.edge then
+			self.verts[id] = nil
+		end
+	end
 end
 
 -- ─── Traversal ────────────────────────────────────────────────────────────────
 
-function DataStructure.faceLoops(face)
+function Data:faceLoops(face)
 	local result = {}
 	local start  = face.loop
 	local l      = start
@@ -222,7 +228,7 @@ function DataStructure.faceLoops(face)
 	return result
 end
 
-function DataStructure.faceVerts(face)
+function Data:faceVerts(face)
 	local result = {}
 	local start  = face.loop
 	local l      = start
@@ -233,7 +239,7 @@ function DataStructure.faceVerts(face)
 	return result
 end
 
-function DataStructure.edgeFaces(edge)
+function Data:edgeFaces(edge)
 	local result = {}
 	if not edge.loop then return result end
 	local start = edge.loop
@@ -245,8 +251,7 @@ function DataStructure.edgeFaces(edge)
 	return result
 end
 
--- Walk the disk cycle to collect all edges connected to vert.
-function DataStructure.vertEdges(vert)
+function Data:vertEdges(vert)
 	local result = {}
 	if not vert.edge then return result end
 	local start = vert.edge
@@ -258,9 +263,7 @@ function DataStructure.vertEdges(vert)
 	return result
 end
 
--- Walk disk then radial to collect all faces containing vert.
--- Correct for both manifold and boundary geometry.
-function DataStructure.vertFaces(vert)
+function Data:vertFaces(vert)
 	local result = {}
 	if not vert.edge then return result end
 	local seen  = {}
@@ -283,14 +286,14 @@ function DataStructure.vertFaces(vert)
 	return result
 end
 
-function DataStructure.isBoundaryEdge(edge)
+function Data:isBoundaryEdge(edge)
 	return edge.loop ~= nil and edge.loop.radial_next == edge.loop
 end
 
 -- ─── Geometry ─────────────────────────────────────────────────────────────────
 
 -- Face normal using Newell's method (correct for N-gons).
-function DataStructure.faceNormal(face)
+function Data:faceNormal(face)
 	local n     = Vector3.zero
 	local start = face.loop
 	local l     = start
@@ -306,7 +309,7 @@ function DataStructure.faceNormal(face)
 	return Vector3.new(0, 1, 0)
 end
 
-function DataStructure.faceCentroid(face)
+function Data:faceCentroid(face)
 	local sum   = Vector3.zero
 	local count = 0
 	local start = face.loop
@@ -319,10 +322,10 @@ function DataStructure.faceCentroid(face)
 	return sum / count
 end
 
-function DataStructure.vertNormal(vert)
+function Data:vertNormal(vert)
 	local sum = Vector3.zero
-	for _, f in ipairs(DataStructure.vertFaces(vert)) do
-		sum += DataStructure.faceNormal(f)
+	for _, f in ipairs(self:vertFaces(vert)) do
+		sum += self:faceNormal(f)
 	end
 	if sum.Magnitude > 1e-5 then
 		return sum.Unit
@@ -330,47 +333,39 @@ function DataStructure.vertNormal(vert)
 	return Vector3.new(0, 1, 0)
 end
 
-function DataStructure.edgeMidpoint(edge)
+function Data:edgeMidpoint(edge)
 	return (edge.v1.position + edge.v2.position) * 0.5
 end
 
-function DataStructure.edgeNormal(edge)
+function Data:edgeNormal(edge)
 	local sum = Vector3.zero
-	for _, f in ipairs(DataStructure.edgeFaces(edge)) do
-		sum += DataStructure.faceNormal(f)
+	for _, f in ipairs(self:edgeFaces(edge)) do
+		sum += self:faceNormal(f)
 	end
 	if sum.Magnitude > 1e-5 then
 		return sum.Unit
 	end
 	return Vector3.new(0, 1, 0)
-end
-
-function DataStructure.removeOrphanedVerts(bm)
-	for id, vert in pairs(bm.verts) do
-		if not vert.edge then
-			bm.verts[id] = nil
-		end
-	end
 end
 
 -- ─── Normal cache ─────────────────────────────────────────────────────────────
 
--- Compute and store normals/tangents on all mesh elements (local space).
+-- Compute and store normals/tangents on all elements (local space).
 -- Sets face.normal, vert.normal, edge.normal, edge.tangent.
-function DataStructure.computeNormals(bm)
-	for _, face in pairs(bm.faces) do
-		face.normal = DataStructure.faceNormal(face)
+function Data:computeNormals()
+	for _, face in pairs(self.faces) do
+		face.normal = self:faceNormal(face)
 	end
-	for _, vert in pairs(bm.verts) do
+	for _, vert in pairs(self.verts) do
 		local sum = Vector3.zero
-		for _, f in ipairs(DataStructure.vertFaces(vert)) do
+		for _, f in ipairs(self:vertFaces(vert)) do
 			sum += f.normal
 		end
 		vert.normal = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
 	end
-	for _, edge in pairs(bm.edges) do
+	for _, edge in pairs(self.edges) do
 		local sum = Vector3.zero
-		for _, f in ipairs(DataStructure.edgeFaces(edge)) do
+		for _, f in ipairs(self:edgeFaces(edge)) do
 			sum += f.normal
 		end
 		edge.normal = if sum.Magnitude > 1e-5 then sum.Unit else Vector3.new(0, 1, 0)
@@ -379,4 +374,4 @@ function DataStructure.computeNormals(bm)
 	end
 end
 
-return DataStructure
+return Data
