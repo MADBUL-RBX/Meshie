@@ -328,11 +328,21 @@ function RMesh:Finalize()
 	end
 
 	local ok, err = pcall(function()
+		-- Re-center EM vertices so the bounding box center sits at the mesh origin.
+		-- Without this, the pivot of the baked MeshPart is off-center when geometry
+		-- extends asymmetrically (e.g. after an extrude).
 		local emCenter = computeEMCenter(self.em)
+		if emCenter ~= Vector3.zero then
+			for _, vid in ipairs(self.em:GetVertices()) do
+				self.em:SetPosition(vid, self.em:GetPosition(vid) - emCenter)
+			end
+		end
+
 		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
 		self.meshPart.Size = tempPart.MeshSize * oldScale
+		-- Compensate the CFrame so the mesh stays in the same world position.
 		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
 	end)
 	if not ok then
@@ -345,6 +355,12 @@ end
 function RMesh:ApplyMeshUpdate()
 	local ok, err = pcall(function()
 		local emCenter = computeEMCenter(self.em)
+		if emCenter ~= Vector3.zero then
+			for _, vid in ipairs(self.em:GetVertices()) do
+				self.em:SetPosition(vid, self.em:GetPosition(vid) - emCenter)
+			end
+		end
+
 		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
 		self.meshPart:ApplyMesh(tempPart)
