@@ -13,6 +13,7 @@ local HandleManager = require(script.HandleManager)
 local SelectionManager = require(script.Parent.SelectionManager)
 local GeometryMode = require(script.GeometryMode)
 local History = require(script.History)
+local RibbonToolManager = require(script.RibbonToolManager)
 local Transform = require(script.Parent.RMesh.Operators.Transform)
 local Extrude = require(script.Parent.RMesh.Operators.Extrude)
 local Bevel = require(script.Parent.RMesh.Operators.Bevel)
@@ -39,9 +40,16 @@ local handleDeselectedCallback = nil
 
 local toolstates = {
 	Transform = Transform,
-	Extrude = Extrude,
-	Bevel = Bevel,
-	Dissolve = Dissolve,
+	Extrude   = Extrude,
+	Bevel     = Bevel,
+	Dissolve  = Dissolve,
+}
+
+local validRibbonTools = {
+	Transform = { Enum.RibbonTool.Move, Enum.RibbonTool.Scale, Enum.RibbonTool.Rotate },
+	Extrude   = { Enum.RibbonTool.Move },
+	Bevel     = { Enum.RibbonTool.Move },
+	Dissolve  = {},
 }
 
 local toolStateItems = {
@@ -171,6 +179,7 @@ local function commitOperation()
 	if activeToolState == SELECT_MODE then
 		return
 	end
+	RibbonToolManager.Stop()
 	unfocusHandle()
 
 	if activeToolState == "Dissolve" then
@@ -198,6 +207,7 @@ local function cancelOperation()
 	if activeToolState == SELECT_MODE then
 		return
 	end
+	RibbonToolManager.Stop()
 	unfocusHandle()
 
 	activeTool:Cancel(rmesh)
@@ -269,6 +279,7 @@ local function activateToolState(name)
 	if pm then
 		pm:lockAll()
 	end
+	RibbonToolManager.Begin(validRibbonTools[name] or {})
 	focusHandle(handle, commitOperation)
 	activeTool = toolstates[name].new()
 	History.StartRecording(rmesh, name)

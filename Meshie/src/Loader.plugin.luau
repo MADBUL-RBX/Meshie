@@ -1,6 +1,9 @@
-local Editor       = require(script.Parent.Editor)
-local Version      = require(script.Parent.Version)
-local NoticePanel  = require(script.Parent.HUD.NoticePanel)
+local Editor              = require(script.Parent.Editor)
+local RibbonToolManager   = require(script.Parent.Editor.RibbonToolManager)
+local Version             = require(script.Parent.Version)
+local NoticePanel         = require(script.Parent.HUD.NoticePanel)
+
+RibbonToolManager.Init(plugin)
 
 local toolbar      = plugin:CreateToolbar("Meshie")
 local toggleButton = toolbar:CreateButton("Meshie", "Toggle Meshie", "")
