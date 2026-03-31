@@ -1,14 +1,13 @@
 -- RMesh/init.luau
 -- The mesh editing kernel. A library.
 -- RMesh.new(meshPart) → an rmesh instance.
--- No knowledge of Meshie's session lifecycle, CHS, or Studio plugins.
+-- No knowledge of Meshie's session lifecycle, CHS, Studio plugins, or proxies.
 
 local AssetService = game:GetService("AssetService")
 local HttpService  = game:GetService("HttpService")
 
 local DataStructure = require(script.Core.DataStructure)
 local EulerOps      = require(script.Core.EulerOps)
-local Bridge        = require(script.Bridge)
 
 local RMesh = {}
 RMesh.__index = RMesh
@@ -203,8 +202,6 @@ function RMesh.new(meshPart)
 		self.bm = fromEditableMesh(em, meshPart.Color, meshPart.Transparency)
 	end
 
-	Bridge.init(self)
-
 	return self
 end
 
@@ -268,24 +265,6 @@ function RMesh:SetFaceStyle(face, color, transparency)
 	if transparency ~= nil then face.transparency = transparency end
 end
 
--- ─── Proxies (delegates to Bridge) ───────────────────────────────────────────
-
-function RMesh:SyncProxies()
-	Bridge.rebuildProxies(self)
-end
-
-function RMesh:ApplyGeometryMode(mode)
-	Bridge.applyGeometryMode(self, mode)
-end
-
-function RMesh:ApplyFaceProxyColors()
-	Bridge.applyFaceProxyColors(self)
-end
-
-function RMesh:FindProxy(elementType, elementId)
-	return Bridge.findProxy(self, elementType, elementId)
-end
-
 -- ─── Queries ──────────────────────────────────────────────────────────────────
 
 function RMesh:GetVertexCount()
@@ -343,9 +322,8 @@ function RMesh:ApplyMeshUpdate()
 	end
 end
 
--- Destroy proxy instances in the world. EM is GC'd when caller nils the rmesh.
+-- Nil EM and BM so they can be GC'd. Caller is responsible for any proxy cleanup.
 function RMesh:Destroy()
-	Bridge.destroy(self)
 	self.em       = nil
 	self.bm       = nil
 	self.meshPart = nil
