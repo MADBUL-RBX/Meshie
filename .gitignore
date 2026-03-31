@@ -14,3 +14,8 @@ Thumbs.db
 
 # Claude Code internal project instructions
 CLAUDE.md
+
+IMPORTANT.md
+
+# Blender source reference (sparse checkout, not part of the plugin)
+blender-ref/

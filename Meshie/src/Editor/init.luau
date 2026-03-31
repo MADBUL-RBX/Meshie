@@ -27,8 +27,9 @@ local enabled         = false
 local activeToolState = SELECT_MODE
 local toolbarButton   = nil
 
-local rmesh = nil  -- active RMesh instance, or nil when no session
-local pm    = nil  -- active ProxyManager instance, or nil when no session
+local rmesh          = nil  -- active RMesh instance, or nil when no session
+local pm             = nil  -- active ProxyManager instance, or nil when no session
+local originalParent = nil  -- meshPart's parent before session (restored on end)
 
 -- selectedEntries: { { type, id, part } } — proxies the user has selected.
 local selectedEntries           = {}
@@ -263,8 +264,13 @@ local function beginSession()
 		return
 	end
 
+	originalParent    = sel[1].Parent
+	sel[1].Parent     = game:GetService("ServerStorage")
+
 	rmesh = RMesh.new(sel[1])
 	if not rmesh then
+		sel[1].Parent  = originalParent
+		originalParent = nil
 		refreshHud()
 		return
 	end
@@ -298,6 +304,9 @@ local function endSession()
 	rmesh:Finalize()
 	rmesh:Destroy()
 	rmesh = nil
+
+	meshPart.Parent = originalParent
+	originalParent  = nil
 
 	SelectionManager.Set({ meshPart })
 	refreshHud()
