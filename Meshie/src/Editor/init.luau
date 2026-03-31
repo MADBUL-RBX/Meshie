@@ -91,6 +91,9 @@ local function syncScene()
 	end
 	pm:rebuild()
 	pm:applyGeometryMode(GeometryMode.Get())
+	if activeToolState ~= SELECT_MODE then
+		pm:lockAll()
+	end
 end
 
 -- ─── HUD ──────────────────────────────────────────────────────────────────────
@@ -141,6 +144,11 @@ local function onSelectionChanged()
 		local cb = handleDeselectedCallback
 		handleDeselectedCallback = nil
 		cb()
+		return
+	end
+
+	-- Proxy selection is locked during an active operation.
+	if activeToolState ~= SELECT_MODE then
 		return
 	end
 
@@ -258,6 +266,9 @@ local function activateToolState(name)
 		return
 	end
 
+	if pm then
+		pm:lockAll()
+	end
 	focusHandle(handle, commitOperation)
 	activeTool = toolstates[name].new()
 	History.StartRecording(rmesh, name)

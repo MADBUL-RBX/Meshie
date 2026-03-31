@@ -250,6 +250,18 @@ function ProxyManager:applyFaceProxyColors()
 	end
 end
 
+function ProxyManager:lockAll()
+	for _, p in ipairs(self.vertexFolder:GetChildren()) do
+		p.Locked = true
+	end
+	for _, p in ipairs(self.edgeFolder:GetChildren()) do
+		p.Locked = true
+	end
+	for _, p in ipairs(self.faceFolder:GetChildren()) do
+		p.Locked = true
+	end
+end
+
 function ProxyManager:findProxy(elementType, elementId)
 	local folder
 	if elementType == "Vertex" then

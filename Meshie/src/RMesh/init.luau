@@ -250,11 +250,18 @@ function RMesh:SetPosition(vert, pos)
 end
 
 -- savedVerts: { { vert, initialPos } } — snapshot taken at tool Activate.
--- worldDelta: Vector3 from handle's initial to current world position.
-function RMesh:ApplyTransformToVerts(savedVerts, worldDelta)
-	local localDelta = self.meshPart.CFrame:VectorToObjectSpace(worldDelta) / self:GetScaleFactor()
+-- oldCF/oldSz: handle CFrame+Size at Activate. newCF/newSz: current.
+-- Applies move + rotate + scale in one pass via the handle's coordinate space.
+function RMesh:ApplyTransformToVerts(savedVerts, oldCF, oldSz, newCF, newSz)
+	local function ax(o, n)
+		return if o == 0 then 1 else n / o
+	end
+	local scale = Vector3.new(ax(oldSz.X, newSz.X), ax(oldSz.Y, newSz.Y), ax(oldSz.Z, newSz.Z))
 	for _, entry in ipairs(savedVerts) do
-		self:SetPosition(entry.vert, entry.initialPos + localDelta)
+		local world      = self:LocalToWorld(entry.initialPos)
+		local handleLocal = oldCF:PointToObjectSpace(world)
+		local newWorld   = newCF:PointToWorldSpace(handleLocal * scale)
+		self:SetPosition(entry.vert, self:WorldToLocal(newWorld))
 	end
 end
 
