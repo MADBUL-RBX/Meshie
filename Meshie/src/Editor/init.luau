@@ -3,74 +3,82 @@
 -- Owns: tool state, plugin lifecycle, session management.
 -- RMesh is the data brain — all mesh state lives there, not here.
 
-local HUD              = require(script.Parent.HUD)
-local UIConfig         = require(script.Parent.HUD.UIConfig)
-local UserConfig       = require(script.Parent.HUD.UserConfig)
-local Hotkeys          = require(script.Parent.HUD.Hotkeys)
-local RMesh            = require(script.Parent.RMesh)
-local ProxyManager           = require(script.ProxyManager)
-local HandleManager    = require(script.HandleManager)
+local HUD = require(script.Parent.HUD)
+local UIConfig = require(script.Parent.HUD.UIConfig)
+local UserConfig = require(script.Parent.HUD.UserConfig)
+local Hotkeys = require(script.Parent.HUD.Hotkeys)
+local RMesh = require(script.Parent.RMesh)
+local ProxyManager = require(script.ProxyManager)
+local HandleManager = require(script.HandleManager)
 local SelectionManager = require(script.Parent.SelectionManager)
-local GeometryMode     = require(script.GeometryMode)
-local History          = require(script.History)
-local Transform        = require(script.Parent.RMesh.Operators.Transform)
-local Extrude          = require(script.Parent.RMesh.Operators.Extrude)
-local Bevel            = require(script.Parent.RMesh.Operators.Bevel)
-local Dissolve         = require(script.Parent.RMesh.Operators.Dissolve)
+local GeometryMode = require(script.GeometryMode)
+local History = require(script.History)
+local Transform = require(script.Parent.RMesh.Operators.Transform)
+local Extrude = require(script.Parent.RMesh.Operators.Extrude)
+local Bevel = require(script.Parent.RMesh.Operators.Bevel)
+local Dissolve = require(script.Parent.RMesh.Operators.Dissolve)
 
 local Editor = {}
 
 -- ─── State ────────────────────────────────────────────────────────────────────
 
-local SELECT_MODE     = "Select"
-local enabled         = false
+local SELECT_MODE = "Select"
+local enabled = false
 local activeToolState = SELECT_MODE
-local toolbarButton   = nil
+local toolbarButton = nil
 
-local rmesh          = nil  -- active RMesh instance, or nil when no session
-local pm             = nil  -- active ProxyManager instance, or nil when no session
-local originalParent = nil  -- meshPart's parent before session (restored on end)
-local activeTool     = nil  -- active operator instance, or nil when in SELECT_MODE
+local rmesh = nil -- active RMesh instance, or nil when no session
+local pm = nil -- active ProxyManager instance, or nil when no session
+local originalParent = nil -- meshPart's parent before session (restored on end)
+local activeTool = nil -- active operator instance, or nil when in SELECT_MODE
 
 -- selectedEntries: { { type, id, part } } — proxies the user has selected.
-local selectedEntries           = {}
-local selectionConn             = nil
-local handleDeselectedCallback  = nil
+local selectedEntries = {}
+local selectionConn = nil
+local handleDeselectedCallback = nil
 
 local toolstates = {
 	Transform = Transform,
-	Extrude   = Extrude,
-	Bevel     = Bevel,
-	Dissolve  = Dissolve,
+	Extrude = Extrude,
+	Bevel = Bevel,
+	Dissolve = Dissolve,
 }
 
 local toolStateItems = {
 	{ Name = "Transform", Icon = UIConfig.ToolIcons.Transform, Hotkey = UserConfig.ToolHotkeys.Transform },
-	{ Name = "Extrude",   Icon = UIConfig.ToolIcons.Extrude,   Hotkey = UserConfig.ToolHotkeys.Extrude   },
-	{ Name = "Bevel",     Icon = UIConfig.ToolIcons.Bevel,     Hotkey = UserConfig.ToolHotkeys.Bevel     },
-	{ Name = "Dissolve",  Icon = UIConfig.ToolIcons.Dissolve,  Hotkey = UserConfig.ToolHotkeys.Dissolve  },
+	{ Name = "Extrude", Icon = UIConfig.ToolIcons.Extrude, Hotkey = UserConfig.ToolHotkeys.Extrude },
+	{ Name = "Bevel", Icon = UIConfig.ToolIcons.Bevel, Hotkey = UserConfig.ToolHotkeys.Bevel },
+	{ Name = "Dissolve", Icon = UIConfig.ToolIcons.Dissolve, Hotkey = UserConfig.ToolHotkeys.Dissolve },
 }
 
 local acceptedTypes = {
 	Transform = { Vertex = true, Edge = true, Face = true },
-	Extrude   = { Face = true },
-	Bevel     = { Edge = true, Vertex = true },
-	Dissolve  = { Edge = true },
+	Extrude = { Face = true },
+	Bevel = { Edge = true, Vertex = true },
+	Dissolve = { Edge = true },
 }
 
 -- ─── Selection helpers ────────────────────────────────────────────────────────
 
 -- Derive element type from proxy folder name.
 local function getProxyInfo(part)
-	if not part:IsA("BasePart") then return nil end
+	if not part:IsA("BasePart") then
+		return nil
+	end
 	local id = part:GetAttribute("ElementId")
-	if not id then return nil end
+	if not id then
+		return nil
+	end
 	local parentName = part.Parent and part.Parent.Name
 	local t
-	if     parentName == "VertexProxies" then t = "Vertex"
-	elseif parentName == "EdgeProxies"   then t = "Edge"
-	elseif parentName == "FaceProxies"   then t = "Face"
-	else   return nil
+	if parentName == "VertexProxies" then
+		t = "Vertex"
+	elseif parentName == "EdgeProxies" then
+		t = "Edge"
+	elseif parentName == "FaceProxies" then
+		t = "Face"
+	else
+		return nil
 	end
 	return { type = t, id = id, part = part }
 end
@@ -78,7 +86,9 @@ end
 -- ─── Scene sync ───────────────────────────────────────────────────────────────
 
 local function syncScene()
-	if not pm then return end
+	if not pm then
+		return
+	end
 	pm:rebuild()
 	pm:applyGeometryMode(GeometryMode.Get())
 end
@@ -89,9 +99,12 @@ local function refreshHud()
 	HUD.SetActiveToolState(activeToolState)
 	if rmesh then
 		local status = "Edit"
-			.. "\nVertices: " .. tostring(rmesh:GetVertexCount())
-			.. "\nFaces: "    .. tostring(rmesh:GetFaceCount())
-			.. "\nTool: "     .. (if activeToolState == SELECT_MODE then "Select" else activeToolState)
+			.. "\nVertices: "
+			.. tostring(rmesh:GetVertexCount())
+			.. "\nFaces: "
+			.. tostring(rmesh:GetFaceCount())
+			.. "\nTool: "
+			.. (if activeToolState == SELECT_MODE then "Select" else activeToolState)
 		HUD.SetMainButtonText("Finalize")
 		HUD.SetStatus(status)
 	else
@@ -121,7 +134,9 @@ local function onSelectionChanged()
 	-- Handle auto-commit: fires once when the handle leaves the selection.
 	if handleDeselectedCallback then
 		for _, inst in ipairs(sel) do
-			if inst:GetAttribute("IsToolHandle") then return end
+			if inst:GetAttribute("IsToolHandle") then
+				return
+			end
 		end
 		local cb = handleDeselectedCallback
 		handleDeselectedCallback = nil
@@ -132,7 +147,9 @@ local function onSelectionChanged()
 	-- Proxy selection: accumulate proxies matching the current geometry mode.
 	selectedEntries = {}
 	for _, inst in ipairs(sel) do
-		if inst:GetAttribute("IsToolHandle") then continue end
+		if inst:GetAttribute("IsToolHandle") then
+			continue
+		end
 		local info = getProxyInfo(inst)
 		if info and info.type == GeometryMode.Get() then
 			selectedEntries[#selectedEntries + 1] = info
@@ -143,7 +160,9 @@ end
 -- ─── Operation lifecycle ──────────────────────────────────────────────────────
 
 local function commitOperation()
-	if activeToolState == SELECT_MODE then return end
+	if activeToolState == SELECT_MODE then
+		return
+	end
 	unfocusHandle()
 
 	if activeToolState == "Dissolve" then
@@ -168,7 +187,9 @@ local function commitOperation()
 end
 
 local function cancelOperation()
-	if activeToolState == SELECT_MODE then return end
+	if activeToolState == SELECT_MODE then
+		return
+	end
 	unfocusHandle()
 
 	activeTool:Cancel(rmesh)
@@ -189,20 +210,32 @@ end
 -- ─── Tool activation ─────────────────────────────────────────────────────────
 
 local function activateToolState(name)
-	if not rmesh then return end
-	if not toolstates[name] then return end
-	if #selectedEntries == 0 then return end
+	if not rmesh then
+		return
+	end
+	if not toolstates[name] then
+		return
+	end
+	if #selectedEntries == 0 then
+		return
+	end
 
 	local lastEntry = selectedEntries[#selectedEntries]
-	if not acceptedTypes[name] or not acceptedTypes[name][lastEntry.type] then return end
+	if not acceptedTypes[name] or not acceptedTypes[name][lastEntry.type] then
+		return
+	end
 
 	if activeToolState ~= SELECT_MODE then
 		cancelOperation()
 		-- Re-find the proxy after syncScene rebuilt all proxies.
 		local freshProxy = pm:findProxy(lastEntry.type, lastEntry.id)
-		if not freshProxy then return end
+		if not freshProxy then
+			return
+		end
 		local freshInfo = getProxyInfo(freshProxy)
-		if not freshInfo then return end
+		if not freshInfo then
+			return
+		end
 		selectedEntries = { freshInfo }
 		lastEntry = freshInfo
 	end
@@ -237,7 +270,9 @@ end
 -- ─── Geometry mode ────────────────────────────────────────────────────────────
 
 local function setGeometryMode(mode)
-	if GeometryMode.Get() == mode then return end
+	if GeometryMode.Get() == mode then
+		return
+	end
 	GeometryMode.Set(mode)
 	selectedEntries = {}
 	HandleManager.Clear()
@@ -251,7 +286,9 @@ end
 -- ─── Handle movement — the core loop ─────────────────────────────────────────
 
 local function onHandleChanged(handle)
-	if not rmesh or activeToolState == SELECT_MODE or not activeTool then return end
+	if not rmesh or activeToolState == SELECT_MODE or not activeTool then
+		return
+	end
 	if activeTool:Apply(rmesh, handle) then
 		syncScene()
 		refreshHud()
@@ -267,12 +304,12 @@ local function beginSession()
 		return
 	end
 
-	originalParent    = sel[1].Parent
-	sel[1].Parent     = game:GetService("ServerStorage")
+	originalParent = sel[1].Parent
+	sel[1].Parent = game:GetService("ServerStorage")
 
 	rmesh = RMesh.new(sel[1])
 	if not rmesh then
-		sel[1].Parent  = originalParent
+		sel[1].Parent = originalParent
 		originalParent = nil
 		refreshHud()
 		return
@@ -282,7 +319,7 @@ local function beginSession()
 	History.Begin(rmesh)
 	HandleManager.Begin()
 	HandleManager.Init(onHandleChanged)
-	selectionConn   = SelectionManager.Changed:Connect(onSelectionChanged)
+	selectionConn = SelectionManager.Changed:Connect(onSelectionChanged)
 	selectedEntries = {}
 	syncScene()
 	refreshHud()
@@ -305,11 +342,11 @@ local function endSession()
 	pm:destroy()
 	pm = nil
 	rmesh:Finalize()
-	rmesh:Destroy()
+	--rmesh:Destroy()
 	rmesh = nil
 
 	meshPart.Parent = originalParent
-	originalParent  = nil
+	originalParent = nil
 
 	SelectionManager.Set({ meshPart })
 	refreshHud()
@@ -323,7 +360,9 @@ local function enable(_p, button)
 
 	local historyBusy = false
 	local function onHistoryChanged(isRedo)
-		if historyBusy or not rmesh then return end
+		if historyBusy or not rmesh then
+			return
+		end
 		historyBusy = true
 		History.Restore(rmesh, isRedo)
 		syncScene()
@@ -332,10 +371,11 @@ local function enable(_p, button)
 			historyBusy = false
 		end)
 	end
-	History.Listen(
-		function() onHistoryChanged(false) end,
-		function() onHistoryChanged(true)  end
-	)
+	History.Listen(function()
+		onHistoryChanged(false)
+	end, function()
+		onHistoryChanged(true)
+	end)
 
 	HUD.Start()
 	HUD.SetToolStates(toolStateItems, SELECT_MODE)

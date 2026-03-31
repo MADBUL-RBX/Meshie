@@ -4,9 +4,9 @@
 -- No knowledge of Meshie's session lifecycle, CHS, Studio plugins, or proxies.
 
 local AssetService = game:GetService("AssetService")
-local HttpService  = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService")
 
-local Data     = require(script.Core.Data)
+local Data = require(script.Core.Data)
 local EulerOps = require(script.Core.EulerOps)
 
 local RMesh = {}
@@ -15,7 +15,7 @@ RMesh.__index = RMesh
 -- ─── Internal: EM ↔ BM conversion ────────────────────────────────────────────
 
 local TOPO_SNAP = 1e4
-local TOPO_TOL  = 0.001
+local TOPO_TOL = 0.001
 
 local function snapV(v)
 	return {
@@ -43,8 +43,12 @@ local function serializeTopology(bm)
 end
 
 local function fromTopology(em, jsonStr, defaultTransparency)
-	local ok, data = pcall(function() return HttpService:JSONDecode(jsonStr) end)
-	if not ok or type(data) ~= "table" then return nil end
+	local ok, data = pcall(function()
+		return HttpService:JSONDecode(jsonStr)
+	end)
+	if not ok or type(data) ~= "table" then
+		return nil
+	end
 
 	local emVerts = {}
 	for _, vid in ipairs(em:GetVertices()) do
@@ -53,7 +57,8 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 
 	local function findEmId(x, y, z)
 		for _, v in ipairs(emVerts) do
-			if math.abs(v.pos.X - x) < TOPO_TOL
+			if
+				math.abs(v.pos.X - x) < TOPO_TOL
 				and math.abs(v.pos.Y - y) < TOPO_TOL
 				and math.abs(v.pos.Z - z) < TOPO_TOL
 			then
@@ -63,26 +68,30 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 		return nil
 	end
 
-	local bm         = Data.new()
+	local bm = Data.new()
 	local vertByEmId = {}
 
 	for _, faceData in ipairs(data) do
 		local bmVerts = {}
-		local valid   = true
+		local valid = true
 		for _, pos in ipairs(faceData.v) do
 			local emId = findEmId(pos[1], pos[2], pos[3])
-			if not emId then return nil end
+			if not emId then
+				return nil
+			end
 			if not vertByEmId[emId] then
-				local v      = bm:addVert(em:GetPosition(emId))
-				v.emId       = emId
+				local v = bm:addVert(em:GetPosition(emId))
+				v.emId = emId
 				vertByEmId[emId] = v
 			end
 			bmVerts[#bmVerts + 1] = vertByEmId[emId]
 		end
-		if not valid or #bmVerts < 3 then return nil end
+		if not valid or #bmVerts < 3 then
+			return nil
+		end
 		local c = faceData.c
 		bm:addFace(bmVerts, {
-			Color        = Color3.new(c[1], c[2], c[3]),
+			Color = Color3.new(c[1], c[2], c[3]),
 			Transparency = faceData.t or defaultTransparency,
 		})
 	end
@@ -90,12 +99,12 @@ local function fromTopology(em, jsonStr, defaultTransparency)
 end
 
 local function fromEditableMesh(em, defaultColor, defaultTransparency)
-	local bm       = Data.new()
+	local bm = Data.new()
 	local vertById = {}
 
 	for _, vid in ipairs(em:GetVertices()) do
-		local v       = bm:addVert(em:GetPosition(vid))
-		v.emId        = vid
+		local v = bm:addVert(em:GetPosition(vid))
+		v.emId = vid
 		vertById[vid] = v
 	end
 
@@ -103,7 +112,9 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 		local colorIds = em:GetFaceColors(fid)
 		if colorIds and #colorIds > 0 then
 			local c = em:GetColor(colorIds[1])
-			if c then return c end
+			if c then
+				return c
+			end
 		end
 		return defaultColor
 	end
@@ -113,7 +124,7 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 		local v1, v2, v3 = vertById[vids[1]], vertById[vids[2]], vertById[vids[3]]
 		if v1 and v2 and v3 then
 			bm:addFace({ v1, v2, v3 }, {
-				Color        = getColor(fid),
+				Color = getColor(fid),
 				Transparency = defaultTransparency,
 			})
 		end
@@ -123,52 +134,29 @@ local function fromEditableMesh(em, defaultColor, defaultTransparency)
 	return bm
 end
 
--- Compute the bounding box center of the EM in mesh local space.
--- Used to correct the CFrame after ApplyMesh re-centers the geometry.
-local function computeEMCenter(em)
-	local minX, minY, minZ =  math.huge,  math.huge,  math.huge
-	local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
-	for _, vid in ipairs(em:GetVertices()) do
-		local p = em:GetPosition(vid)
-		if p.X < minX then
-			minX = p.X
-		end
-		if p.X > maxX then
-			maxX = p.X
-		end
-		if p.Y < minY then
-			minY = p.Y
-		end
-		if p.Y > maxY then
-			maxY = p.Y
-		end
-		if p.Z < minZ then
-			minZ = p.Z
-		end
-		if p.Z > maxZ then
-			maxZ = p.Z
-		end
-	end
-	if minX == math.huge then return Vector3.zero end
-	return Vector3.new((minX + maxX) * 0.5, (minY + maxY) * 0.5, (minZ + maxZ) * 0.5)
-end
-
 local function rebuildEM(em, bm)
-	for _, fid in ipairs(em:GetFaces()) do em:RemoveFace(fid) end
+	for _, fid in ipairs(em:GetFaces()) do
+		em:RemoveFace(fid)
+	end
 	em:RemoveUnused()
 
-	local emIdByVert   = {}
+	local emIdByVert = {}
 	local colorIdByKey = {}
 
 	for _, vert in pairs(bm.verts) do
-		local vid        = em:AddVertex(vert.position)
+		local vid = em:AddVertex(vert.position)
 		emIdByVert[vert] = vid
-		vert.emId        = vid
+		vert.emId = vid
 	end
 
 	local function getColorId(face)
-		local ck = tostring(face.color.R) .. "|" .. tostring(face.color.G)
-			.. "|" .. tostring(face.color.B) .. "|" .. tostring(face.transparency)
+		local ck = tostring(face.color.R)
+			.. "|"
+			.. tostring(face.color.G)
+			.. "|"
+			.. tostring(face.color.B)
+			.. "|"
+			.. tostring(face.transparency)
 		if not colorIdByKey[ck] then
 			colorIdByKey[ck] = em:AddColor(face.color, face.transparency)
 		end
@@ -178,7 +166,9 @@ local function rebuildEM(em, bm)
 	for _, face in pairs(bm.faces) do
 		local verts = bm:faceVerts(face)
 		local n = #verts
-		if n < 3 then continue end
+		if n < 3 then
+			continue
+		end
 		local colorId = getColorId(face)
 		for i = 2, n - 1 do
 			local fid = em:AddTriangle(emIdByVert[verts[1]], emIdByVert[verts[i]], emIdByVert[verts[i + 1]])
@@ -205,18 +195,8 @@ function RMesh.new(meshPart)
 	em:MergeVertices(0.001)
 	em:RemoveUnused()
 
-	local ok2, err2 = pcall(function()
-		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(em))
-		meshPart:ApplyMesh(tempPart)
-	end)
-	if not ok2 then
-		warn("[RMesh] Could not link mesh:", err2)
-		em = nil
-		return nil
-	end
-
-	local self    = setmetatable({}, RMesh)
-	self.em       = em
+	local self = setmetatable({}, RMesh)
+	self.em = em
 	self.meshPart = meshPart
 
 	local topoValue = meshPart:FindFirstChild("MPETopology")
@@ -280,96 +260,133 @@ end
 
 function RMesh:ExtrudeFace(face)
 	local result = EulerOps.extrudeFace(self.bm, face)
-	if result then rebuildEM(self.em, self.bm) end
+	if result then
+		rebuildEM(self.em, self.bm)
+	end
 	return result
 end
 
 function RMesh:DissolveEdge(edge, dissolveVerts)
 	local result = EulerOps.dissolveEdge(self.bm, edge, dissolveVerts)
-	if result then rebuildEM(self.em, self.bm) end
+	if result then
+		rebuildEM(self.em, self.bm)
+	end
 	return result
 end
 
 function RMesh:SetFaceStyle(face, color, transparency)
-	if color ~= nil then face.color = color end
-	if transparency ~= nil then face.transparency = transparency end
+	if color ~= nil then
+		face.color = color
+	end
+	if transparency ~= nil then
+		face.transparency = transparency
+	end
 end
 
 -- ─── Queries ──────────────────────────────────────────────────────────────────
 
 function RMesh:GetVertexCount()
 	local n = 0
-	for _ in pairs(self.bm.verts) do n += 1 end
+	for _ in pairs(self.bm.verts) do
+		n += 1
+	end
 	return n
 end
 
 function RMesh:GetFaceCount()
 	local n = 0
-	for _ in pairs(self.bm.faces) do n += 1 end
+	for _ in pairs(self.bm.faces) do
+		n += 1
+	end
 	return n
 end
 
 -- ─── Finalize & Destroy ───────────────────────────────────────────────────────
 
+local function bmBoundsCenter(bm)
+	local first = true
+	local mn, mx
+	for _, vert in pairs(bm.verts) do
+		local p = vert.position
+		if first then
+			mn = p
+			mx = p
+			first = false
+		else
+			mn = Vector3.new(math.min(mn.X, p.X), math.min(mn.Y, p.Y), math.min(mn.Z, p.Z))
+			mx = Vector3.new(math.max(mx.X, p.X), math.max(mx.Y, p.Y), math.max(mx.Z, p.Z))
+		end
+	end
+	if first then
+		return Vector3.zero
+	end
+	return (mn + mx) * 0.5
+end
+
 -- Write the current mesh state back to meshPart.
 -- Bakes collision, applies mesh, saves topology for future sessions.
+-- Centers geometry so the pivot sits at the bounding box center.
 function RMesh:Finalize()
-	rebuildEM(self.em, self.bm)
+	-- Compute offset before mutating anything
+	local localCenter = bmBoundsCenter(self.bm)
+	local worldOffset = self.meshPart.CFrame:VectorToWorldSpace(localCenter * self:GetScaleFactor())
 
-	-- Re-center geometry so the pivot of the baked MeshPart sits at the bounding
-	-- box center. Must happen before serializing topology so saved positions match
-	-- the baked EM — otherwise re-editing drifts on load.
-	local emCenter = computeEMCenter(self.em)
-	if emCenter ~= Vector3.zero then
-		for _, vert in pairs(self.bm.verts) do
-			vert.position = vert.position - emCenter
-			if vert.emId then
-				self.em:SetPosition(vert.emId, vert.position)
-			end
+	-- Shift all verts to center the geometry at the mesh origin
+	for _, vert in pairs(self.bm.verts) do
+		vert.position -= localCenter
+		if vert.emId then
+			self.em:SetPosition(vert.emId, vert.position)
 		end
 	end
 
+	-- Serialize topology from centered positions so they match the baked EM
 	local topoJson = serializeTopology(self.bm)
 	local existing = self.meshPart:FindFirstChild("MPETopology")
 	if existing then
 		existing.Value = topoJson
 	else
 		local sv = Instance.new("StringValue")
-		sv.Name   = "MPETopology"
-		sv.Value  = topoJson
+		sv.Name = "MPETopology"
+		sv.Value = topoJson
 		sv.Parent = self.meshPart
 	end
 
+	local tempPart = nil
 	local ok, err = pcall(function()
-		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
-		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
-		self.meshPart:ApplyMesh(tempPart)
-		self.meshPart.Size = tempPart.MeshSize * oldScale
-		self.meshPart.CFrame = self.meshPart.CFrame + self.meshPart.CFrame:VectorToWorldSpace(emCenter * oldScale)
+		tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 	end)
 	if not ok then
 		warn("[RMesh] Finalize failed:", err)
+		return
 	end
+
+	local oldScale = self.meshPart.Size / self.meshPart.MeshSize
+	self.meshPart:ApplyMesh(tempPart)
+	self.meshPart.Size = tempPart.MeshSize * oldScale
+	self.meshPart.CFrame = self.meshPart.CFrame + worldOffset
 end
 
 -- Apply the current EM state to meshPart without saving topology.
 -- Used by History to keep CHS in sync after each operation.
 function RMesh:ApplyMeshUpdate()
+	local tempPart = nil
 	local ok, err = pcall(function()
-		local tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
-		local oldScale = self.meshPart.Size / self.meshPart.MeshSize
-		self.meshPart:ApplyMesh(tempPart)
-		self.meshPart.Size = tempPart.MeshSize * oldScale
+		tempPart = AssetService:CreateMeshPartAsync(Content.fromObject(self.em))
 	end)
 	if not ok then
 		warn("[RMesh] ApplyMeshUpdate failed:", err)
+		return
 	end
+
+	local oldScale = self.meshPart.Size / self.meshPart.MeshSize
+	self.meshPart:ApplyMesh(tempPart)
+	self.meshPart.Size = tempPart.MeshSize * oldScale
 end
 
 -- Nil EM and BM so they can be GC'd. Caller is responsible for any proxy cleanup.
 function RMesh:Destroy()
-	self.em       = nil
-	self.bm       = nil
+	self.em = nil
+	self.bm = nil
 	self.meshPart = nil
 end
 

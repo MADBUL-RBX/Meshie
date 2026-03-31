@@ -83,19 +83,19 @@
                           "pluginManaged": true,
                           "children": [
                             {
-                              "name": "DataStructure",
-                              "className": "ModuleScript",
-                              "pluginManaged": true,
-                              "filePaths": [
-                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/RMesh/Core/DataStructure.luau"
-                              ]
-                            },
-                            {
                               "name": "EulerOps",
                               "className": "ModuleScript",
                               "pluginManaged": true,
                               "filePaths": [
                                 "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/RMesh/Core/EulerOps.luau"
+                              ]
+                            },
+                            {
+                              "name": "Data",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/RMesh/Core/Data.luau"
                               ]
                             }
                           ]
