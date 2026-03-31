@@ -3,12 +3,7 @@
 -- Manages in-world proxy Parts that visualize the mesh.
 -- Meshie-specific — not part of the RMesh library.
 --
--- ProxyManager.init(rmesh)                    — create proxy folders, attach refs to rmesh instance
--- ProxyManager.rebuildProxies(rmesh)          — rebuild all proxy Parts from rmesh.bm
--- ProxyManager.applyGeometryMode(rmesh, mode) — set proxy visibility/selectability
--- ProxyManager.applyFaceProxyColors(rmesh)    — read face proxy colors back into rmesh.bm
--- ProxyManager.findProxy(rmesh, type, id)     — find a proxy Part by element type and ID
--- ProxyManager.destroy(rmesh)                 — destroy all proxy instances
+-- ProxyManager.new(rmesh) → a proxy manager instance bound to that rmesh.
 
 local AssetService = game:GetService("AssetService")
 
@@ -16,6 +11,7 @@ local DataStructure = require(script.Parent.Parent.RMesh.Core.DataStructure)
 local UserConfig    = require(script.Parent.Parent.HUD.UserConfig)
 
 local ProxyManager = {}
+ProxyManager.__index = ProxyManager
 
 -- ─── Private helpers ──────────────────────────────────────────────────────────
 
@@ -83,22 +79,15 @@ local function faceKey(face)
 	return "Face_" .. tostring(face.id)
 end
 
-local function destroyFaceProxy(rmesh, key)
-	local existing = rmesh._faceFolder and rmesh._faceFolder:FindFirstChild(key)
-	if existing then existing.Parent = nil end
-	rmesh._faceEMs[key] = nil
-end
-
 -- ─── Private proxy builders ───────────────────────────────────────────────────
 
-local function rebuildVertexProxy(rmesh, vert)
-	if not rmesh._vertexFolder then return end
+local function rebuildVertexProxy(self, vert)
 	local name     = "Vertex_" .. vert.id
-	local existing = rmesh._vertexFolder:FindFirstChild(name)
+	local existing = self.vertexFolder:FindFirstChild(name)
 	if existing then existing.Parent = nil end
 
-	local worldPos    = rmesh:LocalToWorld(vert.position)
-	local worldNormal = rmesh.meshPart.CFrame:VectorToWorldSpace(vert.normal or Vector3.new(0, 1, 0))
+	local worldPos    = self.rmesh:LocalToWorld(vert.position)
+	local worldNormal = self.rmesh.meshPart.CFrame:VectorToWorldSpace(vert.normal or Vector3.new(0, 1, 0))
 
 	local p = Instance.new("Part")
 	p.Shape      = Enum.PartType.Ball
@@ -112,22 +101,23 @@ local function rebuildVertexProxy(rmesh, vert)
 	p.Name       = name
 	p.CFrame     = orientedCFrame(worldPos, worldNormal, Vector3.new(1, 0, 0))
 	p:SetAttribute("ElementId", vert.id)
-	p.Parent = rmesh._vertexFolder
+	p.Parent = self.vertexFolder
 end
 
-local function rebuildEdgeProxy(rmesh, edge)
-	if not rmesh._edgeFolder then return end
+local function rebuildEdgeProxy(self, edge)
 	local name     = "Edge_" .. edge.id
-	local existing = rmesh._edgeFolder:FindFirstChild(name)
-	if existing then existing.Parent = nil end
+	local existing = self.edgeFolder:FindFirstChild(name)
+	if existing then
+		existing.Parent = nil
+	end
 
-	local wA  = rmesh:LocalToWorld(edge.v1.position)
-	local wB  = rmesh:LocalToWorld(edge.v2.position)
+	local wA  = self.rmesh:LocalToWorld(edge.v1.position)
+	local wB  = self.rmesh:LocalToWorld(edge.v2.position)
 	local dir = wB - wA
 	local len = dir.Magnitude
 	if len <= 0 then return end
 
-	local worldNormal = rmesh.meshPart.CFrame:VectorToWorldSpace(edge.normal or Vector3.new(0, 1, 0))
+	local worldNormal = self.rmesh.meshPart.CFrame:VectorToWorldSpace(edge.normal or Vector3.new(0, 1, 0))
 
 	local p = Instance.new("Part")
 	p.Shape      = Enum.PartType.Block
@@ -146,103 +136,114 @@ local function rebuildEdgeProxy(rmesh, edge)
 	end
 	p.CFrame = CFrame.lookAlong((wA + wB) * 0.5, lookDir, upVec)
 	p:SetAttribute("ElementId", edge.id)
-	p.Parent = rmesh._edgeFolder
+	p.Parent = self.edgeFolder
 end
 
-local function rebuildFaceProxy(rmesh, face)
-	if not rmesh._faceFolder then return end
+local function rebuildFaceProxy(self, face)
 	local key = faceKey(face)
-	destroyFaceProxy(rmesh, key)
+	local existing = self.faceFolder:FindFirstChild(key)
+	if existing then
+		existing.Parent = nil
+	end
+	self.faceEMs[key] = nil
 
 	local faceVerts = DataStructure.faceVerts(face)
 	local worldPts  = {}
 	for _, v in ipairs(faceVerts) do
-		worldPts[#worldPts + 1] = rmesh:LocalToWorld(v.position)
+		worldPts[#worldPts + 1] = self.rmesh:LocalToWorld(v.position)
 	end
 	if #worldPts < 3 then return end
 
 	local proxy, em = buildFaceProxy(worldPts)
 	if not proxy then return end
 
-	proxy.Material    = rmesh.meshPart.Material or UserConfig.FaceMaterial
-	proxy.Color       = face.color
+	proxy.Material     = self.rmesh.meshPart.Material or UserConfig.FaceMaterial
+	proxy.Color        = face.color
 	proxy.Transparency = face.transparency
-	proxy.Name        = key
+	proxy.Name         = key
 	proxy:SetAttribute("ElementId", face.id)
-	proxy.Parent      = rmesh._faceFolder
-	rmesh._faceEMs[key] = em
+	proxy.Parent       = self.faceFolder
+	self.faceEMs[key]  = em
 end
 
--- ─── Public API ───────────────────────────────────────────────────────────────
+-- ─── Constructor ──────────────────────────────────────────────────────────────
 
-function ProxyManager.init(rmesh)
-	rmesh._faceEMs = {}
+function ProxyManager.new(rmesh)
+	local self        = setmetatable({}, ProxyManager)
+	self.rmesh        = rmesh
+	self.faceEMs      = {}
 
-	rmesh._root            = Instance.new("Folder")
-	rmesh._root.Name       = "EditObjects"
-	rmesh._root.Archivable = false
-	rmesh._root.Parent     = workspace
+	self.root              = Instance.new("Folder")
+	self.root.Name         = "EditObjects"
+	self.root.Archivable   = false
+	self.root.Parent       = workspace
 
-	rmesh._vertexFolder            = Instance.new("Folder")
-	rmesh._vertexFolder.Name       = "VertexProxies"
-	rmesh._vertexFolder.Archivable = false
-	rmesh._vertexFolder.Parent     = rmesh._root
+	self.vertexFolder            = Instance.new("Folder")
+	self.vertexFolder.Name       = "VertexProxies"
+	self.vertexFolder.Archivable = false
+	self.vertexFolder.Parent     = self.root
 
-	rmesh._edgeFolder            = Instance.new("Folder")
-	rmesh._edgeFolder.Name       = "EdgeProxies"
-	rmesh._edgeFolder.Archivable = false
-	rmesh._edgeFolder.Parent     = rmesh._root
+	self.edgeFolder            = Instance.new("Folder")
+	self.edgeFolder.Name       = "EdgeProxies"
+	self.edgeFolder.Archivable = false
+	self.edgeFolder.Parent     = self.root
 
-	rmesh._faceFolder            = Instance.new("Folder")
-	rmesh._faceFolder.Name       = "FaceProxies"
-	rmesh._faceFolder.Archivable = false
-	rmesh._faceFolder.Parent     = rmesh._root
+	self.faceFolder            = Instance.new("Folder")
+	self.faceFolder.Name       = "FaceProxies"
+	self.faceFolder.Archivable = false
+	self.faceFolder.Parent     = self.root
+
+	return self
 end
 
-function ProxyManager.rebuildProxies(rmesh)
-	if not rmesh._root or not rmesh.bm then return end
+-- ─── Methods ──────────────────────────────────────────────────────────────────
 
-	DataStructure.computeNormals(rmesh.bm)
+function ProxyManager:rebuild()
+	if not self.rmesh.bm then return end
 
-	for _, p in ipairs(rmesh._vertexFolder:GetChildren()) do p.Parent = nil end
-	for _, p in ipairs(rmesh._edgeFolder:GetChildren())   do p.Parent = nil end
-	for _, p in ipairs(rmesh._faceFolder:GetChildren())   do p.Parent = nil end
-	rmesh._faceEMs = {}
+	DataStructure.computeNormals(self.rmesh.bm)
 
-	for _, vert in pairs(rmesh.bm.verts) do
-		rebuildVertexProxy(rmesh, vert)
+	for _, p in ipairs(self.vertexFolder:GetChildren()) do
+		p.Parent = nil
 	end
-	for _, edge in pairs(rmesh.bm.edges) do
-		rebuildEdgeProxy(rmesh, edge)
+	for _, p in ipairs(self.edgeFolder:GetChildren()) do
+		p.Parent = nil
 	end
-	for _, face in pairs(rmesh.bm.faces) do
-		rebuildFaceProxy(rmesh, face)
+	for _, p in ipairs(self.faceFolder:GetChildren()) do
+		p.Parent = nil
+	end
+	self.faceEMs = {}
+
+	for _, vert in pairs(self.rmesh.bm.verts) do
+		rebuildVertexProxy(self, vert)
+	end
+	for _, edge in pairs(self.rmesh.bm.edges) do
+		rebuildEdgeProxy(self, edge)
+	end
+	for _, face in pairs(self.rmesh.bm.faces) do
+		rebuildFaceProxy(self, face)
 	end
 end
 
-function ProxyManager.applyGeometryMode(rmesh, mode)
-	if not rmesh._vertexFolder or not rmesh._edgeFolder then return end
-
-	for _, p in ipairs(rmesh._vertexFolder:GetChildren()) do
+function ProxyManager:applyGeometryMode(mode)
+	for _, p in ipairs(self.vertexFolder:GetChildren()) do
 		p.Locked       = (mode ~= "Vertex")
 		p.Transparency = if mode == "Vertex" then 0 else 0.95
 	end
-	for _, p in ipairs(rmesh._edgeFolder:GetChildren()) do
+	for _, p in ipairs(self.edgeFolder:GetChildren()) do
 		p.Locked       = (mode ~= "Edge")
 		p.Transparency = if mode == "Edge" then 0 else 0.95
 	end
-	if rmesh._faceFolder then
-		for _, p in ipairs(rmesh._faceFolder:GetChildren()) do
-			p.Locked = (mode ~= "Face")
-		end
+	for _, p in ipairs(self.faceFolder:GetChildren()) do
+		p.Locked = (mode ~= "Face")
 	end
 end
 
-function ProxyManager.applyFaceProxyColors(rmesh)
-	if not rmesh._faceFolder or not rmesh.bm then return end
-	for _, proxy in ipairs(rmesh._faceFolder:GetChildren()) do
+function ProxyManager:applyFaceProxyColors()
+	if not self.rmesh.bm then return end
+	for _, proxy in ipairs(self.faceFolder:GetChildren()) do
 		local fid  = proxy:GetAttribute("ElementId")
-		local face = fid and rmesh.bm.faces[fid]
+		local face = fid and self.rmesh.bm.faces[fid]
 		if face then
 			face.color        = proxy.Color
 			face.transparency = proxy.Transparency
@@ -250,28 +251,29 @@ function ProxyManager.applyFaceProxyColors(rmesh)
 	end
 end
 
-function ProxyManager.findProxy(rmesh, elementType, elementId)
+function ProxyManager:findProxy(elementType, elementId)
 	local folder
 	if elementType == "Vertex" then
-		folder = rmesh._vertexFolder
+		folder = self.vertexFolder
 	elseif elementType == "Edge" then
-		folder = rmesh._edgeFolder
+		folder = self.edgeFolder
 	elseif elementType == "Face" then
-		folder = rmesh._faceFolder
+		folder = self.faceFolder
 	end
 	if not folder then return nil end
 	return folder:FindFirstChild(elementType .. "_" .. tostring(elementId))
 end
 
-function ProxyManager.destroy(rmesh)
-	rmesh._faceEMs = {}
-	if rmesh._root then
-		rmesh._root:Destroy()
-		rmesh._root         = nil
-		rmesh._vertexFolder = nil
-		rmesh._edgeFolder   = nil
-		rmesh._faceFolder   = nil
+function ProxyManager:destroy()
+	self.faceEMs = {}
+	if self.root then
+		self.root:Destroy()
+		self.root         = nil
+		self.vertexFolder = nil
+		self.edgeFolder   = nil
+		self.faceFolder   = nil
 	end
+	self.rmesh = nil
 end
 
 return ProxyManager

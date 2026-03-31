@@ -28,6 +28,7 @@ local activeToolState = SELECT_MODE
 local toolbarButton   = nil
 
 local rmesh = nil  -- active RMesh instance, or nil when no session
+local pm    = nil  -- active ProxyManager instance, or nil when no session
 
 -- selectedEntries: { { type, id, part } } — proxies the user has selected.
 local selectedEntries           = {}
@@ -75,9 +76,9 @@ end
 -- ─── Scene sync ───────────────────────────────────────────────────────────────
 
 local function syncScene()
-	if not rmesh then return end
-	ProxyManager.rebuildProxies(rmesh)
-	ProxyManager.applyGeometryMode(rmesh, GeometryMode.Get())
+	if not pm then return end
+	pm:rebuild()
+	pm:applyGeometryMode(GeometryMode.Get())
 end
 
 -- ─── HUD ──────────────────────────────────────────────────────────────────────
@@ -157,8 +158,8 @@ local function commitOperation()
 	selectedEntries = {}
 	activeToolState = SELECT_MODE
 	HUD.SetOperatorPanel(nil)
-	if rmesh then
-		ProxyManager.applyGeometryMode(rmesh, GeometryMode.Get())
+	if pm then
+		pm:applyGeometryMode(GeometryMode.Get())
 	end
 	refreshHud()
 end
@@ -194,7 +195,7 @@ local function activateToolState(name)
 	if activeToolState ~= SELECT_MODE then
 		cancelOperation()
 		-- Re-find the proxy after syncScene rebuilt all proxies.
-		local freshProxy = ProxyManager.findProxy(rmesh, lastEntry.type, lastEntry.id)
+		local freshProxy = pm:findProxy(lastEntry.type, lastEntry.id)
 		if not freshProxy then return end
 		local freshInfo = getProxyInfo(freshProxy)
 		if not freshInfo then return end
@@ -207,7 +208,7 @@ local function activateToolState(name)
 	local proxy = lastEntry.part
 	-- Re-look up the proxy in case it was rebuilt by cancelOperation above.
 	if not proxy or not proxy.Parent then
-		proxy = ProxyManager.findProxy(rmesh, lastEntry.type, lastEntry.id)
+		proxy = pm:findProxy(lastEntry.type, lastEntry.id)
 	end
 	if not proxy then
 		activeToolState = SELECT_MODE
@@ -235,8 +236,8 @@ local function setGeometryMode(mode)
 	GeometryMode.Set(mode)
 	selectedEntries = {}
 	HandleManager.Clear()
-	if rmesh then
-		ProxyManager.applyGeometryMode(rmesh, mode)
+	if pm then
+		pm:applyGeometryMode(mode)
 	end
 	HUD.SetGeometryMode(mode)
 	refreshHud()
@@ -268,7 +269,7 @@ local function beginSession()
 		return
 	end
 
-	ProxyManager.init(rmesh)
+	pm = ProxyManager.new(rmesh)
 	History.Begin(rmesh)
 	HandleManager.Begin()
 	HandleManager.Init(onHandleChanged)
@@ -291,8 +292,9 @@ local function endSession()
 	selectedEntries = {}
 
 	local meshPart = rmesh.meshPart
-	ProxyManager.applyFaceProxyColors(rmesh)
-	ProxyManager.destroy(rmesh)
+	pm:applyFaceProxyColors()
+	pm:destroy()
+	pm = nil
 	rmesh:Finalize()
 	rmesh:Destroy()
 	rmesh = nil
