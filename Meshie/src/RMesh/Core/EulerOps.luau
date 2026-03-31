@@ -23,7 +23,7 @@ function EulerOps.cloneBMesh(bm)
 	c._nextFaceId = bm._nextFaceId
 
 	for id, v in pairs(bm.verts) do
-		c.verts[id] = { id = id, position = v.position, loop = nil, normal = v.normal }
+		c.verts[id] = { id = id, position = v.position, edge = nil, normal = v.normal }
 	end
 
 	for _, face in pairs(bm.faces) do
@@ -310,8 +310,8 @@ function EulerOps.bevelEdge(bm, edge, depth)
 		DataStructure.addFace(bm, stripVerts, stripStyle)
 	end
 
-	if not VA.loop then DataStructure.removeVert(bm, VA) end
-	if not VB.loop then DataStructure.removeVert(bm, VB) end
+	if not VA.edge then DataStructure.removeVert(bm, VA) end
+	if not VB.edge then DataStructure.removeVert(bm, VB) end
 	DataStructure.removeOrphanedVerts(bm)
 
 	return true
@@ -321,7 +321,7 @@ end
 
 function EulerOps.bevelVertex(bm, vert, depth)
 	if depth <= 0 then return nil end
-	if not vert.loop then return nil end
+	if not vert.edge then return nil end
 
 	local pos = vert.position
 	local normal = DataStructure.vertNormal(vert)
