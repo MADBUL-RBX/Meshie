@@ -7,7 +7,8 @@ end
 
 -- entries: { { type, id, part } } — snapshot of selected elements at activate time.
 function Transform:Activate(rmesh, handle, entries)
-	self.startPos   = handle.CFrame.Position
+	self.startCF    = handle.CFrame
+	self.startSz    = handle.Size
 	self.savedVerts = {}
 	local seen = {}
 
@@ -53,9 +54,8 @@ function Transform:Cancel(rmesh)
 end
 
 function Transform:Apply(rmesh, handle)
-	if not self.startPos or not self.savedVerts or #self.savedVerts == 0 then return false end
-	local worldDelta = handle.CFrame.Position - self.startPos
-	rmesh:ApplyTransformToVerts(self.savedVerts, worldDelta)
+	if not self.startCF or not self.savedVerts or #self.savedVerts == 0 then return false end
+	rmesh:ApplyTransformToVerts(self.savedVerts, self.startCF, self.startSz, handle.CFrame, handle.Size)
 	return true
 end
 

@@ -10,7 +10,7 @@ end
 function Extrude:Activate(rmesh, handle, _entries)
 	self.extrudeResult = nil
 	self.savedBM       = EulerOps.cloneBMesh(rmesh.bm)
-	self.startPos      = handle.CFrame.Position
+	self.startCF       = handle.CFrame
 	self.savedCapVerts = nil
 end
 
@@ -43,10 +43,11 @@ function Extrude:Apply(rmesh, handle)
 		handle:SetAttribute("ElementId", self.extrudeResult.capFace.id)
 	end
 
-	if not self.savedCapVerts or not self.startPos then return false end
+	if not self.savedCapVerts or not self.startCF then return false end
 
-	local worldDelta = handle.CFrame.Position - self.startPos
-	rmesh:ApplyTransformToVerts(self.savedCapVerts, worldDelta)
+	-- Extrude is translation-only: pass same Size for both to cancel scale
+	local sz = handle.Size
+	rmesh:ApplyTransformToVerts(self.savedCapVerts, self.startCF, sz, handle.CFrame, sz)
 	return true
 end
 

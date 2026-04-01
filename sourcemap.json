@@ -149,6 +149,14 @@
                           "filePaths": [
                             "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/ProxyManager.luau"
                           ]
+                        },
+                        {
+                          "name": "RibbonToolManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/RibbonToolManager.luau"
+                          ]
                         }
                       ]
                     },
