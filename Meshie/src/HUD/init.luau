@@ -1,28 +1,21 @@
-local CoreGui = game:GetService("CoreGui")
+local CoreGui          = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
 
-local UIConfig = require(script.UIConfig)
-local Factory  = require(script.Factory)
+local UIConfig  = require(script.UIConfig)
+local UserConfig = require(script.UserConfig)
+local Hotkeys   = require(script.Hotkeys)
+local Factory   = require(script.Factory)
 
 local Hud = {}
 
 -- ─── Signals ──────────────────────────────────────────────────────────────────
--- HUD fires these; Editor (or any consumer) connects to them directly.
--- No SetXxxCallback needed — just Hud.SomeSignal:Connect(fn).
 
 local function Signal()
 	local cbs = {}
 	return {
-		Connect = function(_, cb)
-			cbs[#cbs + 1] = cb
-		end,
-		Fire = function(_, ...)
-			for _, cb in ipairs(cbs) do
-				cb(...)
-			end
-		end,
-		Clear = function(_)
-			cbs = {}
-		end,
+		Connect = function(_, cb) cbs[#cbs + 1] = cb end,
+		Fire    = function(_, ...) for _, cb in ipairs(cbs) do cb(...) end end,
+		Clear   = function(_) cbs = {} end,
 	}
 end
 
@@ -33,33 +26,12 @@ Hud.CancelActivated       = Signal()
 Hud.GeometryModeActivated = Signal() -- fires(modeName)
 Hud.DissolveVertsToggled  = Signal() -- fires(enabled: bool)
 
--- ─── State ────────────────────────────────────────────────────────────────────
+-- ─── Forward declarations (referenced by helpers defined before construction) ─
 
-local gui                 = nil
-local infoPanel           = nil
-local uploadPanel         = nil
-local topPanel            = nil
-local settingsTogglePanel = nil
-local settingsPanel       = nil
-local toolRail            = nil
-local operatorPanel       = nil
-local geometryPanel       = nil
-
-local geometryButtons = {}
-
-local mainButton     = nil
-local uploadButton   = nil
-local settingsButton = nil
-
-local titleLabel    = nil
-local modeLabel     = nil
-local verticesLabel = nil
-local facesLabel    = nil
-local toolLabel     = nil
-local noteLabel     = nil
-
-local toolButtons = {}
-
+local gui
+local operatorPanel
+local settingsPanel
+local toolButtons        = {}
 local dissolveVertsEnabled = false
 
 -- ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -90,7 +62,6 @@ local function setToolButtonActive(entry, isActive)
 end
 
 local function setToggleButtonActive(button, isActive, activeText, inactiveText)
-	if not button then return end
 	button:SetAttribute("IsActive", isActive)
 	button.Text = isActive and activeText or inactiveText
 	if isActive then
@@ -110,9 +81,7 @@ local function clearToolButtons()
 end
 
 local function toggleSettingsPanel()
-	if settingsPanel then
-		settingsPanel.Visible = not settingsPanel.Visible
-	end
+	settingsPanel.Visible = not settingsPanel.Visible
 end
 
 local function destroyOperatorPanel()
@@ -158,212 +127,241 @@ local function addCommitCancelButtons(panel, yOffset)
 	end)
 end
 
--- ─── Start ────────────────────────────────────────────────────────────────────
+-- ─── Build GUI ────────────────────────────────────────────────────────────────
 
-function Hud.Start()
-	local existing = CoreGui:FindFirstChild("MeshPartEditHud")
-	if existing then existing:Destroy() end
+local existing = CoreGui:FindFirstChild("MeshPartEditHud")
+if existing then existing:Destroy() end
 
-	gui = Instance.new("ScreenGui")
-	gui.Name            = "MeshPartEditHud"
-	gui.ResetOnSpawn    = false
-	gui.IgnoreGuiInset  = true
-	gui.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
-	gui.Enabled         = false
-	gui.Parent          = CoreGui
+gui = Instance.new("ScreenGui")
+gui.Name           = "MeshPartEditHud"
+gui.ResetOnSpawn   = false
+gui.IgnoreGuiInset = true
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Enabled        = false
+gui.Parent         = CoreGui
 
-	infoPanel = Factory.MakePanel(
-		"InfoPanel",
-		UDim2.new(0, UIConfig.InfoPanelWidth, 0, UIConfig.InfoPanelHeight),
-		Vector2.new(0, 0.5),
-		UDim2.new(0, UIConfig.Margin, 0.5, 0),
-		gui
-	)
+local infoPanel = Factory.MakePanel(
+	"InfoPanel",
+	UDim2.new(0, UIConfig.InfoPanelWidth, 0, UIConfig.InfoPanelHeight),
+	Vector2.new(0, 0.5),
+	UDim2.new(0, UIConfig.Margin, 0.5, 0),
+	gui
+)
 
-	titleLabel = Factory.MakeLabel("TitleLabel", "MeshPartEdit",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 18),
-		UDim2.new(0, UIConfig.Padding, 0, 10),
-		infoPanel, UIConfig.TextColor, UIConfig.TextSizeTitle, Enum.TextXAlignment.Left)
+Factory.MakeLabel("TitleLabel", "MeshPartEdit",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 18),
+	UDim2.new(0, UIConfig.Padding, 0, 10),
+	infoPanel, UIConfig.TextColor, UIConfig.TextSizeTitle, Enum.TextXAlignment.Left)
 
-	Factory.MakeDivider("TopDivider",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 1),
-		UDim2.new(0, UIConfig.Padding, 0, 36), infoPanel)
+Factory.MakeDivider("TopDivider",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 1),
+	UDim2.new(0, UIConfig.Padding, 0, 36), infoPanel)
 
-	modeLabel = Factory.MakeLabel("ModeLabel", "Selection",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 16),
-		UDim2.new(0, UIConfig.Padding, 0, 46),
-		infoPanel, UIConfig.TextColor, UIConfig.TextSizeBody, Enum.TextXAlignment.Left)
+local modeLabel = Factory.MakeLabel("ModeLabel", "Selection",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 16),
+	UDim2.new(0, UIConfig.Padding, 0, 46),
+	infoPanel, UIConfig.TextColor, UIConfig.TextSizeBody, Enum.TextXAlignment.Left)
 
-	verticesLabel = Factory.MakeLabel("VerticesLabel", "",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 14),
-		UDim2.new(0, UIConfig.Padding, 0, 72),
-		infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
+local verticesLabel = Factory.MakeLabel("VerticesLabel", "",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 14),
+	UDim2.new(0, UIConfig.Padding, 0, 72),
+	infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
-	facesLabel = Factory.MakeLabel("FacesLabel", "",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 14),
-		UDim2.new(0, UIConfig.Padding, 0, 90),
-		infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
+local facesLabel = Factory.MakeLabel("FacesLabel", "",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 14),
+	UDim2.new(0, UIConfig.Padding, 0, 90),
+	infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
-	toolLabel = Factory.MakeLabel("ToolLabel", "Select",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 108),
-		UDim2.new(0, UIConfig.Padding, 0, 108),
-		infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
+local toolLabel = Factory.MakeLabel("ToolLabel", "",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 108),
+	UDim2.new(0, UIConfig.Padding, 0, 108),
+	infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
 
-	Factory.MakeDivider("MiddleDivider",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 1),
-		UDim2.new(0, UIConfig.Padding, 0, 132), infoPanel)
+Factory.MakeDivider("MiddleDivider",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 1),
+	UDim2.new(0, UIConfig.Padding, 0, 132), infoPanel)
 
-	noteLabel = Factory.MakeLabel("NoteLabel", "",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 38),
-		UDim2.new(0, UIConfig.Padding, 0, 142),
-		infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall,
-		Enum.TextXAlignment.Left, Enum.TextYAlignment.Top)
+local noteLabel = Factory.MakeLabel("NoteLabel", "",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 38),
+	UDim2.new(0, UIConfig.Padding, 0, 142),
+	infoPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall,
+	Enum.TextXAlignment.Left, Enum.TextYAlignment.Top)
 
-	mainButton = Factory.MakeButton("MainButton", "Edit",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, UIConfig.MainButtonHeight),
-		UDim2.new(0, UIConfig.Padding, 1, -(UIConfig.Padding + UIConfig.MainButtonHeight)),
-		infoPanel)
-	mainButton.Activated:Connect(function()
-		Hud.MainActivated:Fire()
+local mainButton = Factory.MakeButton("MainButton", "Edit",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, UIConfig.MainButtonHeight),
+	UDim2.new(0, UIConfig.Padding, 1, -(UIConfig.Padding + UIConfig.MainButtonHeight)),
+	infoPanel)
+mainButton.Activated:Connect(function()
+	Hud.MainActivated:Fire()
+end)
+
+-- ─── Upload panel ─────────────────────────────────────────────────────────────
+
+local uploadPanel = Factory.MakePanel("UploadPanel",
+	UDim2.new(0, UIConfig.UploadPanelWidth, 0, UIConfig.UploadPanelHeight),
+	Vector2.new(0, 1),
+	UDim2.new(0, UIConfig.Margin, 1, -UIConfig.Margin),
+	gui)
+
+local uploadButton = Factory.MakeButton("UploadButton", "Upload",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, UIConfig.UploadButtonHeight),
+	UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding),
+	uploadPanel)
+uploadButton.Activated:Connect(function()
+	Hud.MainActivated:Fire()
+end)
+
+Factory.MakeLabel("UploadInfoLabel", "Non-operational until CreateAssetAsync() support is added.",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 30),
+	UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding + UIConfig.UploadButtonHeight + 8),
+	uploadPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall,
+	Enum.TextXAlignment.Left, Enum.TextYAlignment.Top)
+
+-- ─── Top panel ────────────────────────────────────────────────────────────────
+
+local topPanel = Factory.MakePanel("TopPanel",
+	UDim2.new(0, UIConfig.FaceModePanelWidth, 0, 58),
+	Vector2.new(0.5, 0),
+	UDim2.new(0.5, 0, 0, UIConfig.Margin),
+	gui)
+
+Factory.MakeLabel("TopPanelLabel", "View",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 12),
+	UDim2.new(0, UIConfig.Padding, 0, 8),
+	topPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
+
+-- ─── Geometry mode panel ──────────────────────────────────────────────────────
+
+local geometryPanel = Factory.MakePanel("GeometryPanel",
+	UDim2.new(0, UIConfig.FaceModePanelWidth, 0, 58),
+	Vector2.new(0.5, 0),
+	UDim2.new(0.5, 0, 0, UIConfig.Margin + 68),
+	gui)
+
+Factory.MakeLabel("GeometryModeLabel", "Mode",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 12),
+	UDim2.new(0, UIConfig.Padding, 0, 8),
+	geometryPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
+
+local modeNames = { "Vertex", "Edge", "Face" }
+local modeHotkeyLabel = { Vertex = "[", Edge = "]", Face = "\\" }
+local btnWidth = (UIConfig.FaceModePanelWidth - UIConfig.Padding * 2 - 4) / 3
+local geometryButtons = {}
+
+for i, modeName in ipairs(modeNames) do
+	local xOff = UIConfig.Padding + (i - 1) * (btnWidth + 2)
+	local btn = Factory.MakeButton("GeoMode" .. modeName, modeName,
+		UDim2.new(0, btnWidth, 0, 26),
+		UDim2.new(0, xOff, 0, 24),
+		geometryPanel)
+	btn.Activated:Connect(function()
+		Hud.GeometryModeActivated:Fire(modeName)
 	end)
-
-	-- ─── Upload panel ─────────────────────────────────────────────────────────
-	uploadPanel = Factory.MakePanel("UploadPanel",
-		UDim2.new(0, UIConfig.UploadPanelWidth, 0, UIConfig.UploadPanelHeight),
-		Vector2.new(0, 1),
-		UDim2.new(0, UIConfig.Margin, 1, -UIConfig.Margin),
-		gui)
-
-	uploadButton = Factory.MakeButton("UploadButton", "Upload",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, UIConfig.UploadButtonHeight),
-		UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding),
-		uploadPanel)
-	uploadButton.Activated:Connect(function()
-		Hud.MainActivated:Fire() -- upload goes through MainActivated for now
-	end)
-
-	Factory.MakeLabel("UploadInfoLabel", "Non-operational until CreateAssetAsync() support is added.",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 30),
-		UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding + UIConfig.UploadButtonHeight + 8),
-		uploadPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall,
-		Enum.TextXAlignment.Left, Enum.TextYAlignment.Top)
-
-	-- ─── Top panel ────────────────────────────────────────────────────────────
-	topPanel = Factory.MakePanel("TopPanel",
-		UDim2.new(0, UIConfig.FaceModePanelWidth, 0, 58),
-		Vector2.new(0.5, 0),
-		UDim2.new(0.5, 0, 0, UIConfig.Margin),
-		gui)
-
-	Factory.MakeLabel("TopPanelLabel", "View",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 12),
-		UDim2.new(0, UIConfig.Padding, 0, 8),
-		topPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
-
-	-- ─── Geometry mode panel ──────────────────────────────────────────────────
-	geometryPanel = Factory.MakePanel("GeometryPanel",
-		UDim2.new(0, UIConfig.FaceModePanelWidth, 0, 58),
-		Vector2.new(0.5, 0),
-		UDim2.new(0.5, 0, 0, UIConfig.Margin + 68),
-		gui)
-
-	Factory.MakeLabel("GeometryModeLabel", "Mode",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 12),
-		UDim2.new(0, UIConfig.Padding, 0, 8),
-		geometryPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall, Enum.TextXAlignment.Left)
-
-	local modeNames = { "Vertex", "Edge", "Face" }
-	local modeHotkeyLabel = { Vertex = "[", Edge = "]", Face = "\\" }
-	local btnWidth = (UIConfig.FaceModePanelWidth - UIConfig.Padding * 2 - 4) / 3
-	geometryButtons = {}
-
-	for i, modeName in ipairs(modeNames) do
-		local xOff = UIConfig.Padding + (i - 1) * (btnWidth + 2)
-		local btn = Factory.MakeButton("GeoMode" .. modeName, modeName,
-			UDim2.new(0, btnWidth, 0, 26),
-			UDim2.new(0, xOff, 0, 24),
-			geometryPanel)
-		btn.Activated:Connect(function()
-			Hud.GeometryModeActivated:Fire(modeName)
-		end)
-		Factory.Create("TextLabel", {
-			Name = "HotkeyLabel",
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.new(1, -4, 1, -3),
-			Size = UDim2.new(0, 16, 0, 12),
-			BackgroundTransparency = 1,
-			Text = modeHotkeyLabel[modeName] or "",
-			TextColor3 = UIConfig.SubTextColor,
-			Font = UIConfig.Font,
-			TextSize = UIConfig.TextSizeSmall,
-			TextXAlignment = Enum.TextXAlignment.Right,
-			TextYAlignment = Enum.TextYAlignment.Bottom,
-			Parent = btn,
-		})
-		geometryButtons[modeName] = btn
-	end
-
-	Hud.SetGeometryMode("Vertex")
-
-	-- ─── Settings ─────────────────────────────────────────────────────────────
-	settingsTogglePanel = Factory.MakePanel("SettingsTogglePanel",
-		UDim2.new(0, UIConfig.SettingsToggleWidth, 0, UIConfig.SettingsToggleHeight),
-		Vector2.new(1, 1),
-		UDim2.new(1, -UIConfig.Margin, 1, -UIConfig.Margin),
-		gui)
-
-	settingsButton = Factory.MakeButton("SettingsButton", "Settings",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, UIConfig.SettingsButtonHeight),
-		UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding),
-		settingsTogglePanel)
-	settingsButton.Activated:Connect(toggleSettingsPanel)
-
-	settingsPanel = Factory.MakePanel("SettingsPanel",
-		UDim2.new(0, UIConfig.SettingsPanelWidth, 0, UIConfig.SettingsPanelHeight),
-		Vector2.new(1, 1),
-		UDim2.new(1, -UIConfig.Margin, 1, -(UIConfig.Margin + UIConfig.SettingsToggleHeight + 10)),
-		gui)
-	settingsPanel.Visible = false
-
-	Factory.MakeLabel("SettingsTitle", "User Settings",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 18),
-		UDim2.new(0, UIConfig.Padding, 0, 10),
-		settingsPanel, UIConfig.TextColor, UIConfig.TextSizeTitle, Enum.TextXAlignment.Left)
-
-	Factory.MakeDivider("SettingsDivider",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 1),
-		UDim2.new(0, UIConfig.Padding, 0, 36), settingsPanel)
-
-	Factory.MakeLabel("SettingsPlaceholder", "Hotkeys and user preferences will live here later.",
-		UDim2.new(1, -UIConfig.Padding * 2, 0, 50),
-		UDim2.new(0, UIConfig.Padding, 0, 48),
-		settingsPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall,
-		Enum.TextXAlignment.Left, Enum.TextYAlignment.Top)
-
-	-- ─── Tool rail ────────────────────────────────────────────────────────────
-	toolRail = Factory.MakePanel("ToolRail",
-		UDim2.new(0, UIConfig.ToolRailWidth, 0, 0),
-		Vector2.new(1, 0.5),
-		UDim2.new(1, -UIConfig.Margin, 0.5, 0),
-		gui)
-
-	Factory.Create("UIPadding", {
-		PaddingTop    = UDim.new(0, UIConfig.Padding),
-		PaddingBottom = UDim.new(0, UIConfig.Padding),
-		PaddingLeft   = UDim.new(0, UIConfig.Padding - 2),
-		PaddingRight  = UDim.new(0, UIConfig.Padding - 2),
-		Parent        = toolRail,
+	Factory.Create("TextLabel", {
+		Name                  = "HotkeyLabel",
+		AnchorPoint           = Vector2.new(1, 1),
+		Position              = UDim2.new(1, -4, 1, -3),
+		Size                  = UDim2.new(0, 16, 0, 12),
+		BackgroundTransparency = 1,
+		Text                  = modeHotkeyLabel[modeName] or "",
+		TextColor3            = UIConfig.SubTextColor,
+		Font                  = UIConfig.Font,
+		TextSize              = UIConfig.TextSizeSmall,
+		TextXAlignment        = Enum.TextXAlignment.Right,
+		TextYAlignment        = Enum.TextYAlignment.Bottom,
+		Parent                = btn,
 	})
-
-	Factory.Create("UIListLayout", {
-		FillDirection       = Enum.FillDirection.Vertical,
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		VerticalAlignment   = Enum.VerticalAlignment.Top,
-		Padding             = UDim.new(0, UIConfig.Spacing),
-		Parent              = toolRail,
-	})
-	toolRail.AutomaticSize = Enum.AutomaticSize.Y
+	geometryButtons[modeName] = btn
 end
+
+-- ─── Settings ─────────────────────────────────────────────────────────────────
+
+local settingsTogglePanel = Factory.MakePanel("SettingsTogglePanel",
+	UDim2.new(0, UIConfig.SettingsToggleWidth, 0, UIConfig.SettingsToggleHeight),
+	Vector2.new(1, 1),
+	UDim2.new(1, -UIConfig.Margin, 1, -UIConfig.Margin),
+	gui)
+
+local settingsButton = Factory.MakeButton("SettingsButton", "Settings",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, UIConfig.SettingsButtonHeight),
+	UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding),
+	settingsTogglePanel)
+settingsButton.Activated:Connect(toggleSettingsPanel)
+
+settingsPanel = Factory.MakePanel("SettingsPanel",
+	UDim2.new(0, UIConfig.SettingsPanelWidth, 0, UIConfig.SettingsPanelHeight),
+	Vector2.new(1, 1),
+	UDim2.new(1, -UIConfig.Margin, 1, -(UIConfig.Margin + UIConfig.SettingsToggleHeight + 10)),
+	gui)
+settingsPanel.Visible = false
+
+Factory.MakeLabel("SettingsTitle", "User Settings",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 18),
+	UDim2.new(0, UIConfig.Padding, 0, 10),
+	settingsPanel, UIConfig.TextColor, UIConfig.TextSizeTitle, Enum.TextXAlignment.Left)
+
+Factory.MakeDivider("SettingsDivider",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 1),
+	UDim2.new(0, UIConfig.Padding, 0, 36), settingsPanel)
+
+Factory.MakeLabel("SettingsPlaceholder", "Hotkeys and user preferences will live here later.",
+	UDim2.new(1, -UIConfig.Padding * 2, 0, 50),
+	UDim2.new(0, UIConfig.Padding, 0, 48),
+	settingsPanel, UIConfig.SubTextColor, UIConfig.TextSizeSmall,
+	Enum.TextXAlignment.Left, Enum.TextYAlignment.Top)
+
+-- ─── Tool rail ────────────────────────────────────────────────────────────────
+
+local toolRail = Factory.MakePanel("ToolRail",
+	UDim2.new(0, UIConfig.ToolRailWidth, 0, 0),
+	Vector2.new(1, 0.5),
+	UDim2.new(1, -UIConfig.Margin, 0.5, 0),
+	gui)
+
+Factory.Create("UIPadding", {
+	PaddingTop    = UDim.new(0, UIConfig.Padding),
+	PaddingBottom = UDim.new(0, UIConfig.Padding),
+	PaddingLeft   = UDim.new(0, UIConfig.Padding - 2),
+	PaddingRight  = UDim.new(0, UIConfig.Padding - 2),
+	Parent        = toolRail,
+})
+
+Factory.Create("UIListLayout", {
+	FillDirection       = Enum.FillDirection.Vertical,
+	HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	VerticalAlignment   = Enum.VerticalAlignment.Top,
+	Padding             = UDim.new(0, UIConfig.Spacing),
+	Parent              = toolRail,
+})
+toolRail.AutomaticSize = Enum.AutomaticSize.Y
+
+-- ─── Keyboard input ───────────────────────────────────────────────────────────
+-- HUD owns all user input. Keyboard hotkeys fire the same signals as buttons.
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if not gui.Enabled then return end
+	if gameProcessed then return end
+	if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if UserInputService:GetFocusedTextBox() then return end
+
+	local key = input.KeyCode
+	if key == Hotkeys.GetKeyCode("Cancel") then
+		Hud.CancelActivated:Fire()
+		return
+	end
+	for name in pairs(toolButtons) do
+		if key == Hotkeys.GetKeyCode(name) then
+			Hud.ToolActivated:Fire(name)
+			return
+		end
+	end
+	for _, mode in ipairs({ "Vertex", "Edge", "Face" }) do
+		if key == Hotkeys.GetKeyCode(mode) then
+			Hud.GeometryModeActivated:Fire(mode)
+			return
+		end
+	end
+end)
 
 -- ─── Operator Panel ───────────────────────────────────────────────────────────
 
@@ -413,78 +411,57 @@ end
 -- ─── Public API ───────────────────────────────────────────────────────────────
 
 function Hud.SetVisible(isVisible)
-	if gui then gui.Enabled = isVisible end
+	gui.Enabled = isVisible
 end
 
 function Hud.SetMainButtonText(text)
-	if mainButton then mainButton.Text = text end
+	mainButton.Text = text
 end
 
-function Hud.SetStatus(text)
-	local modeText, verticesText, facesText, toolText = nil, "", "", nil
-	local extras = {}
-	for line in string.gmatch(text or "", "[^\n]+") do
-		if line == "Edit" or line == "Selection" or line == "Disabled" then
-			modeText = line
-		elseif string.match(line, "^Vertices:") then
-			verticesText = line
-		elseif string.match(line, "^Faces:") then
-			facesText = line
-		elseif string.match(line, "^Tool:") then
-			toolText = line
-		else
-			table.insert(extras, line)
-		end
-	end
-	if modeLabel and modeText then modeLabel.Text = modeText end
-	if verticesLabel then verticesLabel.Text = verticesText end
-	if facesLabel then facesLabel.Text = facesText end
-	if toolLabel and toolText then toolLabel.Text = toolText end
-	if noteLabel then noteLabel.Text = table.concat(extras, "\n") end
+function Hud.SetMode(text)
+	modeLabel.Text = text
 end
 
-local validToolsForMode = {
-	Vertex = { Transform = true, Bevel = true },
-	Edge   = { Transform = true, Bevel = true, Dissolve = true },
-	Face   = { Transform = true, Extrude = true },
-}
+function Hud.SetCounts(vertices, faces)
+	verticesLabel.Text = vertices ~= nil and "Vertices: " .. vertices or ""
+	facesLabel.Text    = faces ~= nil and "Faces: " .. faces or ""
+end
 
-function Hud.SetGeometryMode(mode)
+function Hud.SetTool(name)
+	toolLabel.Text = name and "Tool: " .. name or ""
+end
+
+function Hud.SetNote(text)
+	noteLabel.Text = text or ""
+end
+
+function Hud.SetGeometryMode(mode, validTools)
 	for name, btn in pairs(geometryButtons) do
 		setToggleButtonActive(btn, name == mode, name, name)
 	end
-	local valid = validToolsForMode[mode] or {}
+	local valid = validTools or {}
 	for name, entry in pairs(toolButtons) do
 		local isValid = valid[name] == true
 		entry.Button.AutoButtonColor = isValid
 		entry.Button.Active          = isValid
 		if isValid then
 			entry.Button.BackgroundTransparency = 0
-			if entry.Label then
-				entry.Label.TextTransparency = 0
-			end
+			if entry.Label then entry.Label.TextTransparency = 0 end
 		else
 			entry.Button.BackgroundTransparency = 0.6
-			if entry.Label then
-				entry.Label.TextTransparency = 0.6
-			end
+			if entry.Label then entry.Label.TextTransparency = 0.6 end
 		end
 	end
 end
 
-function Hud.SetToolStates(items, activeName)
+function Hud.SetToolStates(toolNames, activeName)
 	clearToolButtons()
-	for _, item in ipairs(items) do
-		local name, icon, hotkey
-		if typeof(item) == "table" then
-			name   = item.Name
-			icon   = item.Icon
-			hotkey = item.Hotkey
-		else
-			name = item; icon = UIConfig.ToolIcons[name]; hotkey = ""
-		end
+	for _, name in ipairs(toolNames) do
 		local button, hotkeyLabel, iconObject = Factory.MakeToolButton(
-			name .. "Button", icon or "", hotkey or "", toolRail)
+			name .. "Button",
+			UIConfig.ToolIcons[name] or "",
+			UserConfig.ToolHotkeys[name] or "",
+			toolRail)
 		button.Activated:Connect(function()
 			Hud.ToolActivated:Fire(name)
 		end)
@@ -499,35 +476,12 @@ function Hud.SetActiveToolState(activeName)
 	end
 end
 
+-- Called by Loader on plugin.Unloading.
 function Hud.Destroy()
 	destroyOperatorPanel()
-	if gui then
-		gui:Destroy()
-		gui = nil
-	end
-	infoPanel           = nil
-	uploadPanel         = nil
-	topPanel            = nil
-	settingsTogglePanel = nil
-	settingsPanel       = nil
-	toolRail            = nil
-	geometryPanel       = nil
-	geometryButtons     = {}
-	mainButton          = nil
-	uploadButton        = nil
-	settingsButton      = nil
-	modeLabel           = nil
-	verticesLabel       = nil
-	facesLabel          = nil
-	toolLabel           = nil
-	noteLabel           = nil
-	toolButtons         = {}
-	Hud.MainActivated:Clear()
-	Hud.ToolActivated:Clear()
-	Hud.CommitActivated:Clear()
-	Hud.CancelActivated:Clear()
-	Hud.GeometryModeActivated:Clear()
-	Hud.DissolveVertsToggled:Clear()
+	gui:Destroy()
 end
+
+Hud.SetGeometryMode("Vertex")
 
 return Hud
