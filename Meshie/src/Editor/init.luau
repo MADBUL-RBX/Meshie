@@ -398,19 +398,21 @@ local function enable(_p, button)
 
 	HUD.Start()
 	HUD.SetToolStates(toolStateItems, SELECT_MODE)
-	HUD.SetMainActionCallback(function()
+	HUD.MainActivated:Connect(function()
 		if rmesh then
 			endSession()
 		else
 			beginSession()
 		end
 	end)
-	HUD.SetToolStateCallback(activateToolState)
-	HUD.SetGeometryModeCallback(setGeometryMode)
-	HUD.SetOperatorCommitCallback(commitOperation)
-	HUD.SetOperatorCancelCallback(cancelOperation)
-	HUD.SetUploadActionCallback(function()
-		HUD.SetStatus("Upload unavailable\nuntil CreateAssetAsync() supports\nCreator Store plugins.")
+	HUD.ToolActivated:Connect(activateToolState)
+	HUD.GeometryModeActivated:Connect(setGeometryMode)
+	HUD.CommitActivated:Connect(commitOperation)
+	HUD.CancelActivated:Connect(cancelOperation)
+	HUD.DissolveVertsToggled:Connect(function(isEnabled)
+		if activeTool and activeTool.SetDissolveVerts then
+			activeTool:SetDissolveVerts(isEnabled)
+		end
 	end)
 	HUD.SetVisible(true)
 

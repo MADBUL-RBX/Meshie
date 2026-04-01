@@ -5,6 +5,36 @@ local Factory  = require(script.Factory)
 
 local Hud = {}
 
+-- ─── Signals ──────────────────────────────────────────────────────────────────
+-- HUD fires these; Editor (or any consumer) connects to them directly.
+-- No SetXxxCallback needed — just Hud.SomeSignal:Connect(fn).
+
+local function Signal()
+	local cbs = {}
+	return {
+		Connect = function(cb)
+			cbs[#cbs + 1] = cb
+		end,
+		Fire = function(...)
+			for _, cb in ipairs(cbs) do
+				cb(...)
+			end
+		end,
+		Clear = function()
+			cbs = {}
+		end,
+	}
+end
+
+Hud.MainActivated         = Signal() -- Edit / Finalize button
+Hud.ToolActivated         = Signal() -- fires(toolName)
+Hud.CommitActivated       = Signal()
+Hud.CancelActivated       = Signal()
+Hud.GeometryModeActivated = Signal() -- fires(modeName)
+Hud.DissolveVertsToggled  = Signal() -- fires(enabled: bool)
+
+-- ─── State ────────────────────────────────────────────────────────────────────
+
 local gui                 = nil
 local infoPanel           = nil
 local uploadPanel         = nil
@@ -30,15 +60,9 @@ local noteLabel     = nil
 
 local toolButtons = {}
 
-local onMainAction       = nil
-local onToolState        = nil
-local onUploadAction     = nil
-local onOperatorCommit   = nil
-local onOperatorCancel   = nil
-local onGeometryMode     = nil
+local dissolveVertsEnabled = false
 
-local onDissolveVertsToggle = nil
-local dissolveVertsEnabled  = false
+-- ─── Internal helpers ─────────────────────────────────────────────────────────
 
 local function setToolButtonActive(entry, isActive)
 	entry.Button:SetAttribute("IsActive", isActive)
@@ -79,12 +103,16 @@ local function setToggleButtonActive(button, isActive, activeText, inactiveText)
 end
 
 local function clearToolButtons()
-	for _, entry in pairs(toolButtons) do entry.Button:Destroy() end
+	for _, entry in pairs(toolButtons) do
+		entry.Button:Destroy()
+	end
 	toolButtons = {}
 end
 
 local function toggleSettingsPanel()
-	if settingsPanel then settingsPanel.Visible = not settingsPanel.Visible end
+	if settingsPanel then
+		settingsPanel.Visible = not settingsPanel.Visible
+	end
 end
 
 local function destroyOperatorPanel()
@@ -92,8 +120,7 @@ local function destroyOperatorPanel()
 		operatorPanel:Destroy()
 		operatorPanel = nil
 	end
-	onDissolveVertsToggle = nil
-	dissolveVertsEnabled  = false
+	dissolveVertsEnabled = false
 end
 
 local function makeOperatorPanelBase(title)
@@ -119,7 +146,7 @@ local function addCommitCancelButtons(panel, yOffset)
 		UDim2.new(0, UIConfig.Padding, 0, yOffset),
 		panel)
 	commitButton.Activated:Connect(function()
-		if onOperatorCommit then onOperatorCommit() end
+		Hud.CommitActivated:Fire()
 	end)
 
 	local cancelButton = Factory.MakeButton("OperatorCancel", "Cancel",
@@ -127,9 +154,11 @@ local function addCommitCancelButtons(panel, yOffset)
 		UDim2.new(0.5, 2, 0, yOffset),
 		panel)
 	cancelButton.Activated:Connect(function()
-		if onOperatorCancel then onOperatorCancel() end
+		Hud.CancelActivated:Fire()
 	end)
 end
+
+-- ─── Start ────────────────────────────────────────────────────────────────────
 
 function Hud.Start()
 	local existing = CoreGui:FindFirstChild("MeshPartEditHud")
@@ -195,7 +224,7 @@ function Hud.Start()
 		UDim2.new(0, UIConfig.Padding, 1, -(UIConfig.Padding + UIConfig.MainButtonHeight)),
 		infoPanel)
 	mainButton.Activated:Connect(function()
-		if onMainAction then onMainAction() end
+		Hud.MainActivated:Fire()
 	end)
 
 	-- ─── Upload panel ─────────────────────────────────────────────────────────
@@ -210,7 +239,7 @@ function Hud.Start()
 		UDim2.new(0, UIConfig.Padding, 0, UIConfig.Padding),
 		uploadPanel)
 	uploadButton.Activated:Connect(function()
-		if onUploadAction then onUploadAction() end
+		Hud.MainActivated:Fire() -- upload goes through MainActivated for now
 	end)
 
 	Factory.MakeLabel("UploadInfoLabel", "Non-operational until CreateAssetAsync() support is added.",
@@ -245,7 +274,7 @@ function Hud.Start()
 
 	local modeNames = { "Vertex", "Edge", "Face" }
 	local modeHotkeyLabel = { Vertex = "[", Edge = "]", Face = "\\" }
-	local btnWidth  = (UIConfig.FaceModePanelWidth - UIConfig.Padding * 2 - 4) / 3
+	local btnWidth = (UIConfig.FaceModePanelWidth - UIConfig.Padding * 2 - 4) / 3
 	geometryButtons = {}
 
 	for i, modeName in ipairs(modeNames) do
@@ -255,7 +284,7 @@ function Hud.Start()
 			UDim2.new(0, xOff, 0, 24),
 			geometryPanel)
 		btn.Activated:Connect(function()
-			if onGeometryMode then onGeometryMode(modeName) end
+			Hud.GeometryModeActivated:Fire(modeName)
 		end)
 		Factory.Create("TextLabel", {
 			Name = "HotkeyLabel",
@@ -375,14 +404,10 @@ function Hud.SetOperatorPanel(toolstateName)
 			dissolveVertsEnabled = not dissolveVertsEnabled
 			setToggleButtonActive(dissolveVertsButton, dissolveVertsEnabled,
 				"Dissolve Vertices: On", "Dissolve Vertices: Off")
-			if onDissolveVertsToggle then onDissolveVertsToggle(dissolveVertsEnabled) end
+			Hud.DissolveVertsToggled:Fire(dissolveVertsEnabled)
 		end)
 		addCommitCancelButtons(panel, 70)
 	end
-end
-
-function Hud.SetDissolveVertsCallback(callback)
-	onDissolveVertsToggle = callback
 end
 
 -- ─── Public API ───────────────────────────────────────────────────────────────
@@ -435,34 +460,33 @@ function Hud.SetGeometryMode(mode)
 		entry.Button.Active          = isValid
 		if isValid then
 			entry.Button.BackgroundTransparency = 0
-			if entry.Label then entry.Label.TextTransparency = 0 end
+			if entry.Label then
+				entry.Label.TextTransparency = 0
+			end
 		else
 			entry.Button.BackgroundTransparency = 0.6
-			if entry.Label then entry.Label.TextTransparency = 0.6 end
+			if entry.Label then
+				entry.Label.TextTransparency = 0.6
+			end
 		end
 	end
 end
-
-function Hud.SetGeometryModeCallback(callback)  onGeometryMode   = callback end
-function Hud.SetMainActionCallback(callback)     onMainAction     = callback end
-function Hud.SetToolStateCallback(callback)      onToolState      = callback end
-function Hud.SetUploadActionCallback(callback)   onUploadAction   = callback end
-function Hud.SetOperatorCommitCallback(callback) onOperatorCommit = callback end
-function Hud.SetOperatorCancelCallback(callback) onOperatorCancel = callback end
 
 function Hud.SetToolStates(items, activeName)
 	clearToolButtons()
 	for _, item in ipairs(items) do
 		local name, icon, hotkey
 		if typeof(item) == "table" then
-			name = item.Name; icon = item.Icon; hotkey = item.Hotkey
+			name   = item.Name
+			icon   = item.Icon
+			hotkey = item.Hotkey
 		else
 			name = item; icon = UIConfig.ToolIcons[name]; hotkey = ""
 		end
 		local button, hotkeyLabel, iconObject = Factory.MakeToolButton(
 			name .. "Button", icon or "", hotkey or "", toolRail)
 		button.Activated:Connect(function()
-			if onToolState then onToolState(name) end
+			Hud.ToolActivated:Fire(name)
 		end)
 		toolButtons[name] = { Button = button, Label = hotkeyLabel, Icon = iconObject }
 	end
@@ -477,15 +501,33 @@ end
 
 function Hud.Destroy()
 	destroyOperatorPanel()
-	if gui then gui:Destroy(); gui = nil end
-	infoPanel = nil; uploadPanel = nil; topPanel = nil
-	settingsTogglePanel = nil; settingsPanel = nil; toolRail = nil
-	geometryPanel = nil; geometryButtons = {}
-	mainButton = nil; uploadButton = nil; settingsButton = nil
-	titleLabel = nil
-	modeLabel = nil
-	verticesLabel = nil; facesLabel = nil; toolLabel = nil; noteLabel = nil
-	toolButtons = {}
+	if gui then
+		gui:Destroy()
+		gui = nil
+	end
+	infoPanel           = nil
+	uploadPanel         = nil
+	topPanel            = nil
+	settingsTogglePanel = nil
+	settingsPanel       = nil
+	toolRail            = nil
+	geometryPanel       = nil
+	geometryButtons     = {}
+	mainButton          = nil
+	uploadButton        = nil
+	settingsButton      = nil
+	modeLabel           = nil
+	verticesLabel       = nil
+	facesLabel          = nil
+	toolLabel           = nil
+	noteLabel           = nil
+	toolButtons         = {}
+	Hud.MainActivated:Clear()
+	Hud.ToolActivated:Clear()
+	Hud.CommitActivated:Clear()
+	Hud.CancelActivated:Clear()
+	Hud.GeometryModeActivated:Clear()
+	Hud.DissolveVertsToggled:Clear()
 end
 
 return Hud
