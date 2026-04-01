@@ -12,15 +12,15 @@ local Hud = {}
 local function Signal()
 	local cbs = {}
 	return {
-		Connect = function(cb)
+		Connect = function(_, cb)
 			cbs[#cbs + 1] = cb
 		end,
-		Fire = function(...)
+		Fire = function(_, ...)
 			for _, cb in ipairs(cbs) do
 				cb(...)
 			end
 		end,
-		Clear = function()
+		Clear = function(_)
 			cbs = {}
 		end,
 	}
