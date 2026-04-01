@@ -3,6 +3,8 @@
 -- Owns: tool state, plugin lifecycle, session management.
 -- RMesh is the data brain — all mesh state lives there, not here.
 
+local UserInputService = game:GetService("UserInputService")
+
 local HUD = require(script.Parent.HUD)
 local UIConfig = require(script.Parent.HUD.UIConfig)
 local UserConfig = require(script.Parent.HUD.UserConfig)
@@ -14,6 +16,7 @@ local SelectionManager = require(script.Parent.SelectionManager)
 local GeometryMode = require(script.GeometryMode)
 local History = require(script.History)
 local RibbonToolManager = require(script.RibbonToolManager)
+local Selection = require(script.Selection)
 local Transform = require(script.Parent.RMesh.Operators.Transform)
 local Extrude = require(script.Parent.RMesh.Operators.Extrude)
 local Bevel = require(script.Parent.RMesh.Operators.Bevel)
@@ -32,6 +35,7 @@ local rmesh = nil -- active RMesh instance, or nil when no session
 local pm = nil -- active ProxyManager instance, or nil when no session
 local originalParent = nil -- meshPart's parent before session (restored on end)
 local activeTool = nil -- active operator instance, or nil when in SELECT_MODE
+local inputConn = nil
 
 -- selectedEntries: { { type, id, part } } — proxies the user has selected.
 local selectedEntries = {}
@@ -40,16 +44,16 @@ local handleDeselectedCallback = nil
 
 local toolstates = {
 	Transform = Transform,
-	Extrude   = Extrude,
-	Bevel     = Bevel,
-	Dissolve  = Dissolve,
+	Extrude = Extrude,
+	Bevel = Bevel,
+	Dissolve = Dissolve,
 }
 
 local validRibbonTools = {
 	Transform = { Enum.RibbonTool.Move, Enum.RibbonTool.Scale, Enum.RibbonTool.Rotate },
-	Extrude   = { Enum.RibbonTool.Move },
-	Bevel     = { Enum.RibbonTool.Move },
-	Dissolve  = {},
+	Extrude = { Enum.RibbonTool.Move },
+	Bevel = { Enum.RibbonTool.Move },
+	Dissolve = {},
 }
 
 local toolStateItems = {
@@ -98,6 +102,7 @@ local function syncScene()
 		return
 	end
 	pm:rebuild()
+	Selection.Refresh()
 	pm:applyGeometryMode(GeometryMode.Get())
 	if activeToolState ~= SELECT_MODE then
 		pm:lockAll()
@@ -180,6 +185,7 @@ local function commitOperation()
 		return
 	end
 	RibbonToolManager.Stop()
+	Selection.Resume()
 	unfocusHandle()
 
 	if activeToolState == "Dissolve" then
@@ -208,6 +214,7 @@ local function cancelOperation()
 		return
 	end
 	RibbonToolManager.Stop()
+	Selection.Resume()
 	unfocusHandle()
 
 	activeTool:Cancel(rmesh)
@@ -234,6 +241,9 @@ local function activateToolState(name)
 	if not toolstates[name] then
 		return
 	end
+	if activeToolState ~= SELECT_MODE then
+		return
+	end
 	if #selectedEntries == 0 then
 		return
 	end
@@ -243,25 +253,9 @@ local function activateToolState(name)
 		return
 	end
 
-	if activeToolState ~= SELECT_MODE then
-		cancelOperation()
-		-- Re-find the proxy after syncScene rebuilt all proxies.
-		local freshProxy = pm:findProxy(lastEntry.type, lastEntry.id)
-		if not freshProxy then
-			return
-		end
-		local freshInfo = getProxyInfo(freshProxy)
-		if not freshInfo then
-			return
-		end
-		selectedEntries = { freshInfo }
-		lastEntry = freshInfo
-	end
-
 	activeToolState = name
 
 	local proxy = lastEntry.part
-	-- Re-look up the proxy in case it was rebuilt by cancelOperation above.
 	if not proxy or not proxy.Parent then
 		proxy = pm:findProxy(lastEntry.type, lastEntry.id)
 	end
@@ -279,6 +273,7 @@ local function activateToolState(name)
 	if pm then
 		pm:lockAll()
 	end
+	Selection.Pause()
 	RibbonToolManager.Begin(validRibbonTools[name] or {})
 	focusHandle(handle, commitOperation)
 	activeTool = toolstates[name].new()
@@ -338,6 +333,7 @@ local function beginSession()
 	end
 
 	pm = ProxyManager.new(rmesh)
+	Selection.Start(rmesh, pm, GeometryMode.Get)
 	History.Begin(rmesh)
 	HandleManager.Begin()
 	HandleManager.Init(onHandleChanged)
@@ -359,6 +355,7 @@ local function endSession()
 	end
 	selectedEntries = {}
 
+	Selection.Stop()
 	local meshPart = rmesh.meshPart
 	pm:applyFaceProxyColors()
 	pm:destroy()
@@ -417,9 +414,29 @@ local function enable(_p, button)
 	end)
 	HUD.SetVisible(true)
 
-	Hotkeys.Start(function()
-		return enabled
-	end, activateToolState, setGeometryMode)
+	inputConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+		if UserInputService:GetFocusedTextBox() then return end
+
+		local key = input.KeyCode
+		if key == Hotkeys.GetKeyCode("Cancel") then
+			cancelOperation()
+			return
+		end
+		for name in pairs(toolstates) do
+			if key == Hotkeys.GetKeyCode(name) then
+				activateToolState(name)
+				return
+			end
+		end
+		for _, mode in ipairs({ "Vertex", "Edge", "Face" }) do
+			if key == Hotkeys.GetKeyCode(mode) then
+				setGeometryMode(mode)
+				return
+			end
+		end
+	end)
 	refreshHud()
 end
 
@@ -428,8 +445,11 @@ local function disable()
 		endSession()
 	end
 
+	if inputConn then
+		inputConn:Disconnect()
+		inputConn = nil
+	end
 	History.Unlisten()
-	Hotkeys.Destroy()
 	HandleManager.Destroy()
 	HUD.SetVisible(false)
 	HUD.Destroy()

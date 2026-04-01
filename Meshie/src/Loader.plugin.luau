@@ -1,9 +1,11 @@
 local Editor              = require(script.Parent.Editor)
 local RibbonToolManager   = require(script.Parent.Editor.RibbonToolManager)
+local Selection           = require(script.Parent.Editor.Selection)
 local Version             = require(script.Parent.Version)
 local NoticePanel         = require(script.Parent.HUD.NoticePanel)
 
 RibbonToolManager.Init(plugin)
+Selection.Init(plugin)
 
 local toolbar      = plugin:CreateToolbar("Meshie")
 local toggleButton = toolbar:CreateButton("Meshie", "Toggle Meshie", "")

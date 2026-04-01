@@ -3,6 +3,9 @@
 -- Polls via RenderStepped — there is no native RibbonTool.Changed event.
 -- On Stop(), restores the ribbon tool the user had before the operation began.
 --
+-- Idle() keeps Enum.RibbonTool.None active while in SELECT_MODE so the native
+-- Select tool doesn't interfere with Meshie's custom EM raycast picking.
+--
 -- Init(plugin) must be called from Loader.plugin.luau, the only script where
 -- the plugin global is available without explicit passing.
 
@@ -15,9 +18,32 @@ local validTools = nil
 local lastValid  = nil
 local previous   = nil
 local pollConn   = nil
+local idleConn   = nil
 
 function RibbonToolManager.Init(p)
 	plugin = p
+end
+
+-- Keep Enum.RibbonTool.None active while in SELECT_MODE.
+-- Polls to snap back if Studio switches away (e.g. user clicks a toolbar button).
+function RibbonToolManager.Idle()
+	RibbonToolManager.StopIdle()
+	if not plugin then return end
+
+	plugin:SelectRibbonTool(Enum.RibbonTool.None, UDim2.new())
+
+	idleConn = RunService.RenderStepped:Connect(function()
+		if plugin:GetSelectedRibbonTool() ~= Enum.RibbonTool.None then
+			plugin:SelectRibbonTool(Enum.RibbonTool.None, UDim2.new())
+		end
+	end)
+end
+
+function RibbonToolManager.StopIdle()
+	if idleConn then
+		idleConn:Disconnect()
+		idleConn = nil
+	end
 end
 
 -- Begin constraining to a set of valid ribbon tools.

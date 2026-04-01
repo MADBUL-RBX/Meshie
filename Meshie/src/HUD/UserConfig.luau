@@ -18,6 +18,10 @@ UserConfig.ToolHotkeys = {
 	Dissolve  = "V",
 }
 
+UserConfig.ActionHotkeys = {
+	Cancel = "Escape",
+}
+
 UserConfig.GeometryModeHotkeys = {
 	Vertex = "LeftBracket",
 	Edge   = "RightBracket",

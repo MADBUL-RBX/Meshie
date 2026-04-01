@@ -135,14 +135,6 @@
                           ]
                         },
                         {
-                          "name": "HandleManager",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/HandleManager.luau"
-                          ]
-                        },
-                        {
                           "name": "ProxyManager",
                           "className": "ModuleScript",
                           "pluginManaged": true,
@@ -151,11 +143,27 @@
                           ]
                         },
                         {
+                          "name": "HandleManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/HandleManager.luau"
+                          ]
+                        },
+                        {
                           "name": "RibbonToolManager",
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
                             "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/RibbonToolManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "Selection",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/Selection.luau"
                           ]
                         }
                       ]
@@ -216,6 +224,14 @@
                       "pluginManaged": true,
                       "filePaths": [
                         "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Loader.plugin.luau"
+                      ]
+                    },
+                    {
+                      "name": "Input",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Input.luau"
                       ]
                     }
                   ]
