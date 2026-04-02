@@ -219,19 +219,19 @@
                       ]
                     },
                     {
-                      "name": "Loader",
-                      "className": "Script",
-                      "pluginManaged": true,
-                      "filePaths": [
-                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Loader.plugin.luau"
-                      ]
-                    },
-                    {
                       "name": "Input",
                       "className": "ModuleScript",
                       "pluginManaged": true,
                       "filePaths": [
                         "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Input.luau"
+                      ]
+                    },
+                    {
+                      "name": "Meshie",
+                      "className": "Script",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Meshie.plugin.luau"
                       ]
                     }
                   ]
