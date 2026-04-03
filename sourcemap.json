@@ -74,6 +74,14 @@
                               "filePaths": [
                                 "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/RMesh/Operators/Dissolve.luau"
                               ]
+                            },
+                            {
+                              "name": "Inset",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/RMesh/Operators/Inset.luau"
+                              ]
                             }
                           ]
                         },
@@ -111,64 +119,6 @@
                       ]
                     },
                     {
-                      "name": "Editor",
-                      "className": "ModuleScript",
-                      "pluginManaged": true,
-                      "filePaths": [
-                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/init.luau"
-                      ],
-                      "children": [
-                        {
-                          "name": "GeometryMode",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/GeometryMode.luau"
-                          ]
-                        },
-                        {
-                          "name": "History",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/History.luau"
-                          ]
-                        },
-                        {
-                          "name": "ProxyManager",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/ProxyManager.luau"
-                          ]
-                        },
-                        {
-                          "name": "HandleManager",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/HandleManager.luau"
-                          ]
-                        },
-                        {
-                          "name": "RibbonToolManager",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/RibbonToolManager.luau"
-                          ]
-                        },
-                        {
-                          "name": "Selection",
-                          "className": "ModuleScript",
-                          "pluginManaged": true,
-                          "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Editor/Selection.luau"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "name": "HUD",
                       "className": "ModuleScript",
                       "pluginManaged": true,
@@ -185,6 +135,30 @@
                           ]
                         },
                         {
+                          "name": "GeometryMode",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/GeometryMode.luau"
+                          ]
+                        },
+                        {
+                          "name": "HandleManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/HandleManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "History",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/History.luau"
+                          ]
+                        },
+                        {
                           "name": "Hotkeys",
                           "className": "ModuleScript",
                           "pluginManaged": true,
@@ -198,6 +172,30 @@
                           "pluginManaged": true,
                           "filePaths": [
                             "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/NoticePanel.luau"
+                          ]
+                        },
+                        {
+                          "name": "ProxyManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/ProxyManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "RibbonToolManager",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/RibbonToolManager.luau"
+                          ]
+                        },
+                        {
+                          "name": "Selection",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/Selection.luau"
                           ]
                         },
                         {
@@ -232,6 +230,1710 @@
                       "pluginManaged": true,
                       "filePaths": [
                         "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Meshie.plugin.luau"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "F3X REFERENCE",
+              "className": "Folder",
+              "pluginManaged": true,
+              "children": [
+                {
+                  "name": "Building Tools",
+                  "className": "Folder",
+                  "pluginManaged": true,
+                  "children": [
+                    {
+                      "name": "Libraries",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "SerializationV2",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/SerializationV2.luau"
+                          ]
+                        },
+                        {
+                          "name": "SerializationV3",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/SerializationV3.luau"
+                          ]
+                        },
+                        {
+                          "name": "Region",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Region.luau"
+                          ]
+                        },
+                        {
+                          "name": "SupportLibrary",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/SupportLibrary.luau"
+                          ]
+                        },
+                        {
+                          "name": "Signal",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Signal.luau"
+                          ]
+                        },
+                        {
+                          "name": "Make",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Make.luau"
+                          ]
+                        },
+                        {
+                          "name": "Try",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Try.luau"
+                          ]
+                        },
+                        {
+                          "name": "Maid",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Maid.luau"
+                          ]
+                        },
+                        {
+                          "name": "Handles",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Handles.luau"
+                          ]
+                        },
+                        {
+                          "name": "ArcHandles",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/ArcHandles.luau"
+                          ]
+                        },
+                        {
+                          "name": "InstancePool",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/InstancePool.luau"
+                          ]
+                        },
+                        {
+                          "name": "Debug",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Debug/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "SortedArray",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Debug/SortedArray.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Cryo",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "Dictionary",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/init.luau"
+                              ],
+                              "children": [
+                                {
+                                  "name": "init.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/init.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "join",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/join.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "join.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/join.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "keys",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/keys.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "keys.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/keys.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "values",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/values.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "values.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/Dictionary/values.spec.luau"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "List",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/init.luau"
+                              ],
+                              "children": [
+                                {
+                                  "name": "filter",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/filter.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "filter.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/filter.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "filterMap",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/filterMap.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "filterMap.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/filterMap.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "find",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/find.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "find.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/find.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "findWhere",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/findWhere.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "findWhere.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/findWhere.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "foldLeft",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/foldLeft.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "foldLeft.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/foldLeft.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "foldRight",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/foldRight.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "foldRight.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/foldRight.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "getRange",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/getRange.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "getRange.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/getRange.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "init.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/init.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "join",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/join.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "join.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/join.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "map",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/map.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "map.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/map.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "removeIndex",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/removeIndex.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "removeIndex.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/removeIndex.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "removeRange",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/removeRange.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "removeRange.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/removeRange.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "removeValue",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/removeValue.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "removeValue.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/removeValue.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "replaceIndex",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/replaceIndex.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "replaceIndex.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/replaceIndex.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "reverse",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/reverse.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "reverse.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/reverse.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "sort",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/sort.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "sort.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/sort.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "toSet",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/toSet.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "toSet.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/List/toSet.spec.luau"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "None",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/None.luau"
+                              ]
+                            },
+                            {
+                              "name": "None.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/None.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "init.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/init.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "isEmpty",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/Cryo/isEmpty.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "fastSpawn",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Libraries/fastSpawn.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Tools",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "Anchor",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Anchor.luau"
+                          ]
+                        },
+                        {
+                          "name": "Collision",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Collision.luau"
+                          ]
+                        },
+                        {
+                          "name": "Decorate",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Decorate.luau"
+                          ]
+                        },
+                        {
+                          "name": "Lighting",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Lighting.luau"
+                          ]
+                        },
+                        {
+                          "name": "Material",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Material.luau"
+                          ]
+                        },
+                        {
+                          "name": "Mesh",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Mesh.luau"
+                          ]
+                        },
+                        {
+                          "name": "Move",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Move/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "FreeDragging",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Move/FreeDragging.luau"
+                              ]
+                            },
+                            {
+                              "name": "HandleDragging",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Move/HandleDragging.luau"
+                              ]
+                            },
+                            {
+                              "name": "UIController",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Move/UIController.luau"
+                              ]
+                            },
+                            {
+                              "name": "Util",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Move/Util.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "NewPart",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/NewPart.luau"
+                          ]
+                        },
+                        {
+                          "name": "Paint",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Paint/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "PaintHistoryRecord",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Paint/PaintHistoryRecord.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Resize",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Resize.luau"
+                          ]
+                        },
+                        {
+                          "name": "Rotate",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Rotate.luau"
+                          ]
+                        },
+                        {
+                          "name": "Surface",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Surface.luau"
+                          ]
+                        },
+                        {
+                          "name": "Texture",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Texture.luau"
+                          ]
+                        },
+                        {
+                          "name": "Weld",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Tools/Weld.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "UI",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "ImageButton",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ImageButton.luau"
+                          ]
+                        },
+                        {
+                          "name": "TextLabel",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/TextLabel.luau"
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Frame.luau"
+                          ]
+                        },
+                        {
+                          "name": "ImageLabel",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ImageLabel.luau"
+                          ]
+                        },
+                        {
+                          "name": "LoadingSpinner",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/LoadingSpinner.luau"
+                          ]
+                        },
+                        {
+                          "name": "TextBox",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/TextBox.luau"
+                          ]
+                        },
+                        {
+                          "name": "Explorer",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Explorer/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "ItemRow",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Explorer/ItemRow.luau"
+                              ]
+                            },
+                            {
+                              "name": "ItemList",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Explorer/ItemList.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "ScrollingFrame",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScrollingFrame.luau"
+                          ]
+                        },
+                        {
+                          "name": "ScopeHUD",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "HotkeyTooltip",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/HotkeyTooltip/init.luau"
+                              ],
+                              "children": [
+                                {
+                                  "name": "AltTooltip",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/HotkeyTooltip/AltTooltip.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "ScopeInTooltip",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/HotkeyTooltip/ScopeInTooltip.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "ScopeLockTooltip",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/HotkeyTooltip/ScopeLockTooltip.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "ScopeOutTooltip",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/HotkeyTooltip/ScopeOutTooltip.luau"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "ScopeHierarchyItemButton",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/ScopeHierarchyItemButton.luau"
+                              ]
+                            },
+                            {
+                              "name": "ModeToggle",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/ModeToggle/init.luau"
+                              ],
+                              "children": [
+                                {
+                                  "name": "Tooltip",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ScopeHUD/ModeToggle/Tooltip.luau"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Dock",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "AboutPane",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/AboutPane.luau"
+                              ]
+                            },
+                            {
+                              "name": "SelectionButton",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/SelectionButton.luau"
+                              ]
+                            },
+                            {
+                              "name": "SelectionPane",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/SelectionPane.luau"
+                              ]
+                            },
+                            {
+                              "name": "ToolButton",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/ToolButton.luau"
+                              ]
+                            },
+                            {
+                              "name": "ToolList",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/ToolList.luau"
+                              ]
+                            },
+                            {
+                              "name": "Tooltip",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dock/Tooltip.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "ToolManualWindow",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ToolManualWindow.luau"
+                          ]
+                        },
+                        {
+                          "name": "ColorPicker",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ColorPicker/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "Slider",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ColorPicker/Slider.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Notifications",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Notifications/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "NotificationDialog",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Notifications/NotificationDialog.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "ExportDialog",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/ExportDialog.luau"
+                          ]
+                        },
+                        {
+                          "name": "Dropdown",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/UI/Dropdown.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Vendor",
+                      "className": "Folder",
+                      "pluginManaged": true,
+                      "children": [
+                        {
+                          "name": "Roact",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/init.luau"
+                          ],
+                          "children": [
+                            {
+                              "name": "Binding",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Binding.luau"
+                              ]
+                            },
+                            {
+                              "name": "Binding.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Binding.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "Component",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.luau"
+                              ]
+                            },
+                            {
+                              "name": "Component.spec",
+                              "className": "Folder",
+                              "pluginManaged": true,
+                              "children": [
+                                {
+                                  "name": "context.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/context.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "defaultProps.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/defaultProps.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "didMount.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/didMount.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "didUpdate.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/didUpdate.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "extend.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/extend.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "getDerivedStateFromProps.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/getDerivedStateFromProps.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "getElementTraceback.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/getElementTraceback.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "init.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/init.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "render.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/render.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "setState.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/setState.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "shouldUpdate.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/shouldUpdate.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "validateProps.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/validateProps.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "willUnmount.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/willUnmount.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "willUpdate.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/willUpdate.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "legacyContext.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Component.spec/legacyContext.spec.luau"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "ComponentLifecyclePhase",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/ComponentLifecyclePhase.luau"
+                              ]
+                            },
+                            {
+                              "name": "Config",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Config.luau"
+                              ]
+                            },
+                            {
+                              "name": "Config.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Config.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "ElementKind",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/ElementKind.luau"
+                              ]
+                            },
+                            {
+                              "name": "ElementKind.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/ElementKind.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "ElementUtils",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/ElementUtils.luau"
+                              ]
+                            },
+                            {
+                              "name": "ElementUtils.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/ElementUtils.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "GlobalConfig",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/GlobalConfig.luau"
+                              ]
+                            },
+                            {
+                              "name": "GlobalConfig.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/GlobalConfig.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "Logging",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Logging.luau"
+                              ]
+                            },
+                            {
+                              "name": "None",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/None.luau"
+                              ]
+                            },
+                            {
+                              "name": "NoopRenderer",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/NoopRenderer.luau"
+                              ]
+                            },
+                            {
+                              "name": "Portal",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Portal.luau"
+                              ]
+                            },
+                            {
+                              "name": "PropMarkers",
+                              "className": "Folder",
+                              "pluginManaged": true,
+                              "children": [
+                                {
+                                  "name": "Change",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PropMarkers/Change.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "Change.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PropMarkers/Change.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "Children",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PropMarkers/Children.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "Event",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PropMarkers/Event.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "Event.spec",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PropMarkers/Event.spec.luau"
+                                  ]
+                                },
+                                {
+                                  "name": "Ref",
+                                  "className": "ModuleScript",
+                                  "pluginManaged": true,
+                                  "filePaths": [
+                                    "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PropMarkers/Ref.luau"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "PureComponent",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PureComponent.luau"
+                              ]
+                            },
+                            {
+                              "name": "PureComponent.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/PureComponent.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "RobloxRenderer",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/RobloxRenderer.luau"
+                              ]
+                            },
+                            {
+                              "name": "RobloxRenderer.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/RobloxRenderer.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "SingleEventManager",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/SingleEventManager.luau"
+                              ]
+                            },
+                            {
+                              "name": "SingleEventManager.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/SingleEventManager.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "Symbol",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Symbol.luau"
+                              ]
+                            },
+                            {
+                              "name": "Symbol.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Symbol.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "Type",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Type.luau"
+                              ]
+                            },
+                            {
+                              "name": "Type.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/Type.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "assertDeepEqual",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/assertDeepEqual.luau"
+                              ]
+                            },
+                            {
+                              "name": "assertDeepEqual.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/assertDeepEqual.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "assign",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/assign.luau"
+                              ]
+                            },
+                            {
+                              "name": "assign.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/assign.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createElement",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createElement.luau"
+                              ]
+                            },
+                            {
+                              "name": "createElement.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createElement.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createFragment",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createFragment.luau"
+                              ]
+                            },
+                            {
+                              "name": "createFragment.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createFragment.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createReconciler",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createReconciler.luau"
+                              ]
+                            },
+                            {
+                              "name": "createReconciler.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createReconciler.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createReconcilerCompat",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createReconcilerCompat.luau"
+                              ]
+                            },
+                            {
+                              "name": "createReconcilerCompat.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createReconcilerCompat.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createRef",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createRef.luau"
+                              ]
+                            },
+                            {
+                              "name": "createRef.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createRef.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createSignal",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createSignal.luau"
+                              ]
+                            },
+                            {
+                              "name": "createSignal.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createSignal.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createSpy",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createSpy.luau"
+                              ]
+                            },
+                            {
+                              "name": "createSpy.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createSpy.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "getDefaultInstanceProperty",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/getDefaultInstanceProperty.luau"
+                              ]
+                            },
+                            {
+                              "name": "getDefaultInstanceProperty.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/getDefaultInstanceProperty.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "init.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/init.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "internalAssert",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/internalAssert.luau"
+                              ]
+                            },
+                            {
+                              "name": "invalidSetStateMessages",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/invalidSetStateMessages.luau"
+                              ]
+                            },
+                            {
+                              "name": "oneChild",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/oneChild.luau"
+                              ]
+                            },
+                            {
+                              "name": "oneChild.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/oneChild.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "strict",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/strict.luau"
+                              ]
+                            },
+                            {
+                              "name": "strict.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/strict.spec.luau"
+                              ]
+                            },
+                            {
+                              "name": "createContext",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createContext.luau"
+                              ]
+                            },
+                            {
+                              "name": "createContext.spec",
+                              "className": "ModuleScript",
+                              "pluginManaged": true,
+                              "filePaths": [
+                                "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Vendor/Roact/createContext.spec.luau"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Assets",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Assets.luau"
+                      ]
+                    },
+                    {
+                      "name": "Core",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/init.luau"
+                      ],
+                      "children": [
+                        {
+                          "name": "Snapping",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/Snapping.luau"
+                          ]
+                        },
+                        {
+                          "name": "BoundingBox",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/BoundingBox.luau"
+                          ]
+                        },
+                        {
+                          "name": "Selection",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/Selection.luau"
+                          ]
+                        },
+                        {
+                          "name": "Targeting",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/Targeting.luau"
+                          ]
+                        },
+                        {
+                          "name": "History",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/History.luau"
+                          ]
+                        },
+                        {
+                          "name": "Security",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/Security.luau"
+                          ]
+                        },
+                        {
+                          "name": "ListenForManualWindowTrigger",
+                          "className": "ModuleScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Core/ListenForManualWindowTrigger.luau"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Loader",
+                      "className": "ModuleScript",
+                      "pluginManaged": true,
+                      "filePaths": [
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Loader/init.luau"
+                      ],
+                      "children": [
+                        {
+                          "name": "ToolInitializer",
+                          "className": "LocalScript",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Loader/ToolInitializer.local.luau"
+                          ]
+                        },
+                        {
+                          "name": "PluginInitializer",
+                          "className": "Script",
+                          "pluginManaged": true,
+                          "filePaths": [
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/F3X REFERENCE/Building Tools/Loader/PluginInitializer.legacy.luau"
+                          ]
+                        }
                       ]
                     }
                   ]

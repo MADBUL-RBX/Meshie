@@ -1,88 +1,77 @@
 -- HUD/init.luau
--- Owns: signals, keyboard input, display setters.
--- Factory owns construction. HUD owns wiring.
+-- THE application. Owns toolbar, input, display, session, and tool coordination.
+-- Plugin script is a thin bootstrap that calls Init/Enable/Disable/Shutdown.
 
 local UserInputService = game:GetService("UserInputService")
 
-local UI        = require(script.Factory)
-local UIConfig  = require(script.UIConfig)
-local Hotkeys   = require(script.Hotkeys)
+-- Subsystems
+local UI              = require(script.Factory)
+local UIConfig        = require(script.UIConfig)
+local Hotkeys         = require(script.Hotkeys)
+local ProxyManager    = require(script.ProxyManager)
+local HandleManager   = require(script.HandleManager)
+local GeometryMode    = require(script.GeometryMode)
+local History         = require(script.History)
+local RibbonToolManager = require(script.RibbonToolManager)
+local Selection       = require(script.Selection)
+
+-- External
+local RMesh            = require(script.Parent.RMesh)
+local SelectionManager = require(script.Parent.SelectionManager)
+local Transform        = require(script.Parent.RMesh.Operators.Transform)
+local Extrude          = require(script.Parent.RMesh.Operators.Extrude)
+local Bevel            = require(script.Parent.RMesh.Operators.Bevel)
+local Dissolve         = require(script.Parent.RMesh.Operators.Dissolve)
+local Inset            = require(script.Parent.RMesh.Operators.Inset)
 
 local Hud = {}
 
--- ─── Signals ──────────────────────────────────────────────────────────────────
+-- ─── State ───────────────────────────────────────────────────────────────────
 
-local function Signal()
-	local cbs = {}
-	return {
-		Connect = function(_, cb) cbs[#cbs + 1] = cb end,
-		Fire    = function(_, ...) for _, cb in ipairs(cbs) do cb(...) end end,
-	}
-end
+local SELECT_MODE = "Select"
 
-Hud.MainActivated         = Signal() -- Edit / Finalize button
-Hud.ToolActivated         = Signal() -- fires(toolName)
-Hud.CommitActivated       = Signal()
-Hud.CancelActivated       = Signal()
-Hud.GeometryModeActivated = Signal() -- fires(modeName)
-Hud.DissolveVertsToggled  = Signal() -- fires(enabled: bool)
-
--- ─── Wire built UI to signals ─────────────────────────────────────────────────
-
-UI.mainButton.Activated:Connect(function() Hud.MainActivated:Fire() end)
-UI.uploadButton.Activated:Connect(function() Hud.MainActivated:Fire() end)
-
-for modeName, btn in pairs(UI.geometryButtons) do
-	btn.Activated:Connect(function() Hud.GeometryModeActivated:Fire(modeName) end)
-end
-
-for _, op in pairs(UI.operatorPanels) do
-	op.commitButton.Activated:Connect(function() Hud.CommitActivated:Fire() end)
-	op.cancelButton.Activated:Connect(function() Hud.CancelActivated:Fire() end)
-end
-
-for name, entry in pairs(UI.toolButtons) do
-	entry.Button.Activated:Connect(function() Hud.ToolActivated:Fire(name) end)
-end
-
+local enabled           = false
+local activeToolState   = SELECT_MODE
+local historyBusy       = false
 local dissolveVertsEnabled = false
-UI.operatorPanels.Dissolve.dissolveVertsButton.Activated:Connect(function()
-	dissolveVertsEnabled = not dissolveVertsEnabled
-	local btn = UI.operatorPanels.Dissolve.dissolveVertsButton
-	btn.Text             = dissolveVertsEnabled and "Dissolve Vertices: On" or "Dissolve Vertices: Off"
-	btn.BackgroundColor3 = dissolveVertsEnabled and UIConfig.ButtonActiveColor or UIConfig.ButtonColor
-	btn.TextColor3       = dissolveVertsEnabled and UIConfig.ButtonActiveTextColor or UIConfig.TextColor
-	btn:SetAttribute("IsActive", dissolveVertsEnabled)
-	Hud.DissolveVertsToggled:Fire(dissolveVertsEnabled)
-end)
 
--- ─── Keyboard input ───────────────────────────────────────────────────────────
+local rmesh          = nil
+local pm             = nil
+local originalParent = nil
+local activeTool     = nil
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if not UI.gui.Enabled then return end
-	if gameProcessed then return end
-	if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-	if UserInputService:GetFocusedTextBox() then return end
-	local key = input.KeyCode
-	if key == Hotkeys.GetKeyCode("Cancel") then
-		Hud.CancelActivated:Fire()
-		return
-	end
-	for name in pairs(UI.toolButtons) do
-		if key == Hotkeys.GetKeyCode(name) then
-			Hud.ToolActivated:Fire(name)
-			return
-		end
-	end
-	for _, mode in ipairs({ "Vertex", "Edge", "Face" }) do
-		if key == Hotkeys.GetKeyCode(mode) then
-			Hud.GeometryModeActivated:Fire(mode)
-			return
-		end
-	end
-end)
+local selectedEntries          = {}
+local selectionConn            = nil
+local handleDeselectedCallback = nil
 
--- ─── Tool button visual state ─────────────────────────────────────────────────
+local toggleButton = nil
+local geoButtons   = {}
+
+local toolstates = {
+	Transform = Transform,
+	Extrude   = Extrude,
+	Bevel     = Bevel,
+	Dissolve  = Dissolve,
+	Inset     = Inset,
+}
+
+local validRibbonTools = {
+	Transform = { Enum.RibbonTool.Move, Enum.RibbonTool.Scale, Enum.RibbonTool.Rotate },
+	Extrude   = { Enum.RibbonTool.Move },
+	Bevel     = { Enum.RibbonTool.Move },
+	Dissolve  = {},
+	Inset     = { Enum.RibbonTool.Scale },
+}
+
+local acceptedTypes = {
+	Transform = { Vertex = true, Edge = true, Face = true },
+	Extrude   = { Face = true },
+	Bevel     = { Edge = true, Vertex = true },
+	Dissolve  = { Edge = true },
+	Inset     = { Face = true },
+}
+
+-- ─── Display helpers ─────────────────────────────────────────────────────────
 
 local function setToolButtonActive(entry, isActive)
 	entry.Button:SetAttribute("IsActive", isActive)
@@ -109,52 +98,8 @@ local function setToolButtonActive(entry, isActive)
 	end
 end
 
--- ─── Public API ───────────────────────────────────────────────────────────────
-
-function Hud.SetVisible(isVisible)
-	UI.gui.Enabled = isVisible
-end
-
-function Hud.SetMainButtonText(text)
-	UI.mainButton.Text = text
-end
-
-function Hud.SetMode(text)
-	UI.modeLabel.Text = text
-end
-
-function Hud.SetCounts(vertices, faces)
-	UI.verticesLabel.Text = vertices ~= nil and "Vertices: " .. vertices or ""
-	UI.facesLabel.Text    = faces ~= nil and "Faces: " .. faces or ""
-end
-
-function Hud.SetTool(name)
-	UI.toolLabel.Text = name and "Tool: " .. name or ""
-end
-
-function Hud.SetNote(text)
-	UI.noteLabel.Text = text or ""
-end
-
-function Hud.SetGeometryMode(mode, validTools)
-	local valid = validTools or {}
-	for name, btn in pairs(UI.geometryButtons) do
-		local isActive = name == mode
-		btn:SetAttribute("IsActive", isActive)
-		btn.BackgroundColor3 = isActive and UIConfig.ButtonActiveColor or UIConfig.ButtonColor
-		btn.TextColor3       = isActive and UIConfig.ButtonActiveTextColor or UIConfig.TextColor
-	end
-	for name, entry in pairs(UI.toolButtons) do
-		local isValid = valid[name] == true
-		entry.Button.AutoButtonColor = isValid
-		entry.Button.Active          = isValid
-		entry.Button.BackgroundTransparency = isValid and 0 or 0.6
-		if entry.Label then entry.Label.TextTransparency = isValid and 0 or 0.6 end
-	end
-end
-
-function Hud.SetOperatorPanel(toolstateName)
-	if toolstateName ~= "Dissolve" then
+local function showOperatorPanel(name)
+	if name ~= "Dissolve" then
 		dissolveVertsEnabled = false
 		local d = UI.operatorPanels.Dissolve.dissolveVertsButton
 		d.Text             = "Dissolve Vertices: Off"
@@ -162,18 +107,432 @@ function Hud.SetOperatorPanel(toolstateName)
 		d.TextColor3       = UIConfig.TextColor
 		d:SetAttribute("IsActive", false)
 	end
-	for name, op in pairs(UI.operatorPanels) do
-		op.panel.Visible = name == toolstateName
+	for n, op in pairs(UI.operatorPanels) do
+		op.panel.Visible = n == name
 	end
 end
 
-function Hud.SetActiveToolState(activeName)
+local function updateGeoVisuals(mode)
+	for name, btn in pairs(UI.geometryButtons) do
+		local isActive = name == mode
+		btn:SetAttribute("IsActive", isActive)
+		btn.BackgroundColor3 = isActive and UIConfig.ButtonActiveColor or UIConfig.ButtonColor
+		btn.TextColor3       = isActive and UIConfig.ButtonActiveTextColor or UIConfig.TextColor
+	end
+	for name, btn in pairs(geoButtons) do
+		btn:SetActive(name == mode)
+	end
 	for name, entry in pairs(UI.toolButtons) do
-		setToolButtonActive(entry, name == activeName)
+		local types = acceptedTypes[name]
+		local isValid = types and types[mode] == true
+		entry.Button.AutoButtonColor = isValid
+		entry.Button.Active          = isValid
+		entry.Button.BackgroundTransparency = isValid and 0 or 0.6
+		if entry.Label then entry.Label.TextTransparency = isValid and 0 or 0.6 end
 	end
 end
 
-function Hud.Destroy()
+-- ─── Selection helpers ───────────────────────────────────────────────────────
+
+local function getProxyInfo(part)
+	if not part:IsA("BasePart") then return nil end
+	local id = part:GetAttribute("ElementId")
+	if not id then return nil end
+	local parentName = part.Parent and part.Parent.Name
+	local t
+	if parentName == "VertexProxies" then
+		t = "Vertex"
+	elseif parentName == "EdgeProxies" then
+		t = "Edge"
+	elseif parentName == "FaceProxies" then
+		t = "Face"
+	else
+		return nil
+	end
+	return { type = t, id = id, part = part }
+end
+
+-- ─── Scene sync ──────────────────────────────────────────────────────────────
+
+local function syncScene()
+	if not pm then return end
+	pm:rebuild()
+	Selection.Refresh()
+	pm:applyGeometryMode(GeometryMode.Get())
+	if activeToolState ~= SELECT_MODE then
+		pm:lockAll()
+	end
+end
+
+-- ─── Handle focus ────────────────────────────────────────────────────────────
+
+local function focusHandle(handle, onDeselected)
+	SelectionManager.Set({ handle })
+	task.defer(function()
+		handleDeselectedCallback = onDeselected
+	end)
+end
+
+local function unfocusHandle()
+	handleDeselectedCallback = nil
+end
+
+-- ─── Selection listener ──────────────────────────────────────────────────────
+
+local function onSelectionChanged()
+	local sel = SelectionManager.Get()
+
+	if handleDeselectedCallback then
+		for _, inst in ipairs(sel) do
+			if inst:GetAttribute("IsToolHandle") then return end
+		end
+		local cb = handleDeselectedCallback
+		handleDeselectedCallback = nil
+		cb()
+		return
+	end
+
+	if activeToolState ~= SELECT_MODE then return end
+
+	selectedEntries = {}
+	for _, inst in ipairs(sel) do
+		if inst:GetAttribute("IsToolHandle") then continue end
+		local info = getProxyInfo(inst)
+		if info and info.type == GeometryMode.Get() then
+			selectedEntries[#selectedEntries + 1] = info
+		end
+	end
+end
+
+-- ─── Operation lifecycle ─────────────────────────────────────────────────────
+
+local function commitOperation()
+	if activeToolState == SELECT_MODE then return end
+	RibbonToolManager.Stop()
+	Selection.Resume()
+	unfocusHandle()
+
+	if activeToolState == "Dissolve" then
+		if activeTool:Execute(rmesh) then syncScene() end
+	end
+
+	activeTool:Commit()
+	activeTool = nil
+	History.Commit(rmesh)
+
+	HandleManager.StopListening()
+	HandleManager.Clear()
+	selectedEntries = {}
+	activeToolState = SELECT_MODE
+	if pm then pm:applyGeometryMode(GeometryMode.Get()) end
+
+	local v = rmesh and rmesh:GetVertexCount() or 0
+	local f = rmesh and rmesh:GetFaceCount() or 0
+	UI.toolLabel.Text     = "Tool: Select"
+	UI.verticesLabel.Text = "Vertices: " .. v
+	UI.facesLabel.Text    = "Faces: " .. f
+	showOperatorPanel(nil)
+	for _, entry in pairs(UI.toolButtons) do
+		setToolButtonActive(entry, false)
+	end
+end
+
+local function cancelOperation()
+	if activeToolState == SELECT_MODE then return end
+	RibbonToolManager.Stop()
+	Selection.Resume()
+	unfocusHandle()
+
+	activeTool:Cancel(rmesh)
+	activeTool = nil
+	History.Cancel()
+
+	HandleManager.StopListening()
+	HandleManager.Clear()
+	selectedEntries = {}
+	activeToolState = SELECT_MODE
+	if rmesh then syncScene() end
+
+	local v = rmesh and rmesh:GetVertexCount() or 0
+	local f = rmesh and rmesh:GetFaceCount() or 0
+	UI.toolLabel.Text     = "Tool: Select"
+	UI.verticesLabel.Text = "Vertices: " .. v
+	UI.facesLabel.Text    = "Faces: " .. f
+	showOperatorPanel(nil)
+	for _, entry in pairs(UI.toolButtons) do
+		setToolButtonActive(entry, false)
+	end
+end
+
+-- ─── Tool activation ─────────────────────────────────────────────────────────
+
+local function activateTool(name)
+	if not rmesh then return end
+	if not toolstates[name] then return end
+	if activeToolState ~= SELECT_MODE then return end
+	if #selectedEntries == 0 then return end
+
+	local lastEntry = selectedEntries[#selectedEntries]
+	if not acceptedTypes[name] or not acceptedTypes[name][lastEntry.type] then return end
+
+	activeToolState = name
+
+	local proxy = lastEntry.part
+	if not proxy or not proxy.Parent then
+		proxy = pm:findProxy(lastEntry.type, lastEntry.id)
+	end
+	if not proxy then
+		activeToolState = SELECT_MODE
+		return
+	end
+
+	local handle = HandleManager.Arm(proxy, lastEntry.type)
+	if not handle then
+		activeToolState = SELECT_MODE
+		return
+	end
+
+	if pm then pm:lockAll() end
+	Selection.Pause()
+	RibbonToolManager.Begin(validRibbonTools[name] or {})
+	focusHandle(handle, commitOperation)
+	activeTool = toolstates[name].new()
+	History.StartRecording(rmesh, name)
+	activeTool:Activate(rmesh, handle, selectedEntries)
+	HandleManager.BeginListening()
+
+	UI.toolLabel.Text = "Tool: " .. name
+	showOperatorPanel(name)
+	for n, entry in pairs(UI.toolButtons) do
+		setToolButtonActive(entry, n == name)
+	end
+end
+
+-- ─── Handle movement ─────────────────────────────────────────────────────────
+
+local function onHandleChanged(handle)
+	if not rmesh or activeToolState == SELECT_MODE or not activeTool then return end
+	if activeTool:Apply(rmesh, handle) then
+		syncScene()
+		UI.verticesLabel.Text = "Vertices: " .. rmesh:GetVertexCount()
+		UI.facesLabel.Text    = "Faces: " .. rmesh:GetFaceCount()
+	end
+end
+
+-- ─── Geometry mode ───────────────────────────────────────────────────────────
+
+local function setGeometryMode(mode)
+	if GeometryMode.Get() == mode then return end
+	GeometryMode.Set(mode)
+	selectedEntries = {}
+	HandleManager.Clear()
+	if pm then pm:applyGeometryMode(mode) end
+	updateGeoVisuals(mode)
+end
+
+-- ─── Session lifecycle ───────────────────────────────────────────────────────
+
+local function beginSession()
+	local sel = SelectionManager.Get()
+	if #sel ~= 1 or not sel[1]:IsA("MeshPart") then
+		return false
+	end
+
+	originalParent = sel[1].Parent
+	sel[1].Parent = game:GetService("ServerStorage")
+
+	rmesh = RMesh.new(sel[1])
+	if not rmesh then
+		sel[1].Parent = originalParent
+		originalParent = nil
+		return false
+	end
+
+	pm = ProxyManager.new(rmesh)
+	Selection.Start(rmesh, pm, GeometryMode.Get)
+	History.Begin(rmesh)
+	HandleManager.Begin()
+	HandleManager.Init(onHandleChanged)
+	selectionConn = SelectionManager.Changed:Connect(onSelectionChanged)
+	selectedEntries = {}
+	syncScene()
+
+	local v = rmesh:GetVertexCount()
+	local f = rmesh:GetFaceCount()
+	UI.modeLabel.Text     = "Edit"
+	UI.mainButton.Text    = "Finalize"
+	UI.verticesLabel.Text = "Vertices: " .. v
+	UI.facesLabel.Text    = "Faces: " .. f
+	UI.toolLabel.Text     = "Tool: Select"
+	UI.noteLabel.Text     = ""
+	showOperatorPanel(nil)
+	for _, entry in pairs(UI.toolButtons) do
+		setToolButtonActive(entry, false)
+	end
+	return true
+end
+
+local function endSession()
+	if activeToolState ~= SELECT_MODE then cancelOperation() end
+	HandleManager.Destroy()
+
+	if selectionConn then
+		selectionConn:Disconnect()
+		selectionConn = nil
+	end
+	selectedEntries = {}
+
+	Selection.Stop()
+	local meshPart = rmesh.meshPart
+	pm:applyFaceProxyColors()
+	pm:destroy()
+	pm = nil
+	rmesh:Finalize()
+	rmesh = nil
+
+	meshPart.Parent = originalParent
+	originalParent = nil
+	SelectionManager.Set({ meshPart })
+
+	UI.modeLabel.Text     = "Select a MeshPart"
+	UI.mainButton.Text    = "Edit"
+	UI.verticesLabel.Text = ""
+	UI.facesLabel.Text    = ""
+	UI.toolLabel.Text     = ""
+	UI.noteLabel.Text     = ""
+	showOperatorPanel(nil)
+	for _, entry in pairs(UI.toolButtons) do
+		setToolButtonActive(entry, false)
+	end
+end
+
+-- ─── Wire UI buttons ─────────────────────────────────────────────────────────
+
+UI.mainButton.Activated:Connect(function()
+	if rmesh then
+		endSession()
+	elseif not beginSession() then
+		UI.noteLabel.Text = "Select one MeshPart."
+	end
+end)
+
+UI.uploadButton.Activated:Connect(function() end)
+
+for modeName, btn in pairs(UI.geometryButtons) do
+	btn.Activated:Connect(function() setGeometryMode(modeName) end)
+end
+
+for _, op in pairs(UI.operatorPanels) do
+	op.commitButton.Activated:Connect(function() commitOperation() end)
+	op.cancelButton.Activated:Connect(function() cancelOperation() end)
+end
+
+for name, entry in pairs(UI.toolButtons) do
+	entry.Button.Activated:Connect(function() activateTool(name) end)
+end
+
+UI.operatorPanels.Dissolve.dissolveVertsButton.Activated:Connect(function()
+	dissolveVertsEnabled = not dissolveVertsEnabled
+	local btn = UI.operatorPanels.Dissolve.dissolveVertsButton
+	btn.Text             = dissolveVertsEnabled and "Dissolve Vertices: On" or "Dissolve Vertices: Off"
+	btn.BackgroundColor3 = dissolveVertsEnabled and UIConfig.ButtonActiveColor or UIConfig.ButtonColor
+	btn.TextColor3       = dissolveVertsEnabled and UIConfig.ButtonActiveTextColor or UIConfig.TextColor
+	btn:SetAttribute("IsActive", dissolveVertsEnabled)
+	if activeTool and activeTool.SetDissolveVerts then
+		activeTool:SetDissolveVerts(dissolveVertsEnabled)
+	end
+end)
+
+-- ─── Keyboard input ──────────────────────────────────────────────────────────
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if not UI.gui.Enabled then return end
+	if gameProcessed then return end
+	if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if UserInputService:GetFocusedTextBox() then return end
+	local key = input.KeyCode
+	if key == Hotkeys.GetKeyCode("Cancel") then
+		cancelOperation()
+		return
+	end
+	for name in pairs(UI.toolButtons) do
+		if key == Hotkeys.GetKeyCode(name) then
+			activateTool(name)
+			return
+		end
+	end
+	for _, mode in ipairs({ "Vertex", "Edge", "Face" }) do
+		if key == Hotkeys.GetKeyCode(mode) then
+			setGeometryMode(mode)
+			return
+		end
+	end
+end)
+
+-- ─── Public API (for plugin script) ──────────────────────────────────────────
+
+function Hud.Init(p)
+	RibbonToolManager.Init(p)
+	Selection.Init(p)
+
+	local toolbar = p:CreateToolbar("Meshie")
+	toggleButton = toolbar:CreateButton("Meshie", "Toggle Meshie editor", "")
+
+	local vBtn = toolbar:CreateButton("Vertex", "Vertex mode", "")
+	local eBtn = toolbar:CreateButton("Edge",   "Edge mode",   "")
+	local fBtn = toolbar:CreateButton("Face",   "Face mode",   "")
+	geoButtons = { Vertex = vBtn, Edge = eBtn, Face = fBtn }
+
+	toggleButton.Click:Connect(function()
+		if enabled then Hud.Disable() else Hud.Enable() end
+	end)
+
+	for mode, btn in pairs(geoButtons) do
+		btn.Click:Connect(function()
+			if not enabled then return end
+			setGeometryMode(mode)
+		end)
+	end
+end
+
+function Hud.Enable()
+	enabled = true
+	toggleButton:SetActive(true)
+
+	local function onHistory(isRedo)
+		if historyBusy or not rmesh then return end
+		historyBusy = true
+		History.Restore(rmesh, isRedo)
+		syncScene()
+		UI.verticesLabel.Text = "Vertices: " .. rmesh:GetVertexCount()
+		UI.facesLabel.Text    = "Faces: " .. rmesh:GetFaceCount()
+		task.defer(function() historyBusy = false end)
+	end
+	History.Listen(function() onHistory(false) end, function() onHistory(true) end)
+
+	UI.gui.Enabled    = true
+	UI.modeLabel.Text  = "Select a MeshPart"
+	UI.mainButton.Text = "Edit"
+	UI.verticesLabel.Text = ""
+	UI.facesLabel.Text    = ""
+	UI.toolLabel.Text     = ""
+	UI.noteLabel.Text     = ""
+	showOperatorPanel(nil)
+	setGeometryMode("Vertex")
+end
+
+function Hud.Disable()
+	if rmesh then endSession() end
+	History.Unlisten()
+	HandleManager.Destroy()
+	UI.gui.Enabled = false
+	toggleButton:SetActive(false)
+	for _, btn in pairs(geoButtons) do btn:SetActive(false) end
+	enabled = false
+end
+
+function Hud.Shutdown()
+	if enabled then Hud.Disable() end
 	UI.gui:Destroy()
 end
 

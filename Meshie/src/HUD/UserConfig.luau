@@ -16,6 +16,7 @@ UserConfig.ToolHotkeys = {
 	Extrude   = "X",
 	Bevel     = "C",
 	Dissolve  = "V",
+	Inset     = "B",
 }
 
 UserConfig.ActionHotkeys = {

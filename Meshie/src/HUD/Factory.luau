@@ -298,7 +298,7 @@ toolRail.AutomaticSize = Enum.AutomaticSize.Y
 
 -- Tool buttons (pre-built in order)
 local toolButtons = {}
-for _, name in ipairs({ "Transform", "Extrude", "Bevel", "Dissolve" }) do
+for _, name in ipairs({ "Transform", "Extrude", "Inset", "Bevel", "Dissolve" }) do
 	local btn, lbl, icon = makeToolButton(
 		name.."Button",
 		UIConfig.ToolIcons and UIConfig.ToolIcons[name] or "",
@@ -349,6 +349,10 @@ local extrudePanel = makeOpPanel("Extrude")
 makeNote("Move handle to adjust depth.", extrudePanel)
 local eCommit, eCancel = makeOpButtons(extrudePanel, 70)
 
+local insetPanel = makeOpPanel("Inset")
+makeNote("Scale handle to adjust inset.", insetPanel)
+local iCommit, iCancel = makeOpButtons(insetPanel, 70)
+
 local dissolvePanel = makeOpPanel("Dissolve Edge")
 local dissolveVertsBtn = makeButton("DissolveVertsToggle", "Dissolve Vertices: Off",
 	UDim2.new(1, -UIConfig.Padding*2, 0, 26), UDim2.new(0, UIConfig.Padding, 0, 34), dissolvePanel)
@@ -374,6 +378,7 @@ return {
 		Transform = { panel = transformPanel, commitButton = tCommit, cancelButton = tCancel },
 		Bevel     = { panel = bevelPanel,     commitButton = bCommit, cancelButton = bCancel },
 		Extrude   = { panel = extrudePanel,   commitButton = eCommit, cancelButton = eCancel },
+		Inset     = { panel = insetPanel,     commitButton = iCommit, cancelButton = iCancel },
 		Dissolve  = { panel = dissolvePanel,  commitButton = dCommit, cancelButton = dCancel, dissolveVertsButton = dissolveVertsBtn },
 	},
 }

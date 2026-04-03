@@ -52,6 +52,7 @@ UIConfig.ToolIcons = {
 	Extrude   = "rbxassetid://125103286868546",
 	Bevel     = "",
 	Dissolve  = "",
+	Inset     = "",
 }
 
 return UIConfig

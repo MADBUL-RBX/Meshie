@@ -1,4 +1,4 @@
--- Editor/ProxyManager.luau
+-- HUD/ProxyManager.luau
 -- The Roblox translator for RMesh.
 -- Manages in-world proxy Parts that visualize the mesh.
 -- Meshie-specific — not part of the RMesh library.
@@ -7,7 +7,7 @@
 
 local AssetService = game:GetService("AssetService")
 
-local UserConfig = require(script.Parent.Parent.HUD.UserConfig)
+local UserConfig = require(script.Parent.UserConfig)
 
 local ProxyManager = {}
 ProxyManager.__index = ProxyManager

@@ -31,10 +31,12 @@ function RibbonToolManager.Idle()
 	if not plugin then return end
 
 	plugin:SelectRibbonTool(Enum.RibbonTool.None, UDim2.new())
+	task.wait() -- Avoid immediately snapping back if already in None, gives Studio a moment to process the tool switch.
 
 	idleConn = RunService.RenderStepped:Connect(function()
 		if plugin:GetSelectedRibbonTool() ~= Enum.RibbonTool.None then
 			plugin:SelectRibbonTool(Enum.RibbonTool.None, UDim2.new())
+			task.wait()
 		end
 	end)
 end
@@ -61,11 +63,17 @@ function RibbonToolManager.Begin(tools)
 
 	plugin:SelectRibbonTool(lastValid, UDim2.new())
 
-	-- Defer poll start by one frame so Studio processes the initial tool switch
-	-- before we begin checking — avoids a stutter from the first poll firing early.
+	-- Defer poll start so Studio processes the initial tool switch.
+	-- skipNext prevents re-calling SelectRibbonTool before the previous
+	-- call has taken effect (it doesn't reflect until the next frame).
 	task.defer(function()
 		if not validTools then return end
+		local skipNext = true
 		pollConn = RunService.RenderStepped:Connect(function()
+			if skipNext then
+				skipNext = false
+				return
+			end
 			local current = plugin:GetSelectedRibbonTool()
 			for _, t in ipairs(validTools) do
 				if current == t then
@@ -74,6 +82,7 @@ function RibbonToolManager.Begin(tools)
 				end
 			end
 			plugin:SelectRibbonTool(lastValid, UDim2.new())
+			skipNext = true
 		end)
 	end)
 end
@@ -86,6 +95,7 @@ function RibbonToolManager.Stop()
 	end
 	if plugin and previous then
 		plugin:SelectRibbonTool(previous, UDim2.new())
+		task.wait()
 	end
 	validTools = nil
 	lastValid  = nil
