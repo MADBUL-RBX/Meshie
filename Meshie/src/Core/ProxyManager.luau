@@ -167,7 +167,7 @@ end
 
 -- ─── Constructor ──────────────────────────────────────────────────────────────
 
-function ProxyManager.new(rmesh)
+function ProxyManager.new(rmesh, parentFolder)
 	local self        = setmetatable({}, ProxyManager)
 	self.rmesh        = rmesh
 	self.faceEMs      = {}
@@ -175,7 +175,7 @@ function ProxyManager.new(rmesh)
 	self.root              = Instance.new("Folder")
 	self.root.Name         = "EditObjects"
 	self.root.Archivable   = false
-	self.root.Parent       = workspace
+	self.root.Parent       = parentFolder or workspace
 
 	self.vertexFolder            = Instance.new("Folder")
 	self.vertexFolder.Name       = "VertexProxies"

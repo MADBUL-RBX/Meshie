@@ -119,19 +119,19 @@
                       ]
                     },
                     {
-                      "name": "HUD",
+                      "name": "Core",
                       "className": "ModuleScript",
                       "pluginManaged": true,
                       "filePaths": [
-                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/init.luau"
+                        "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/init.luau"
                       ],
                       "children": [
                         {
-                          "name": "Factory",
+                          "name": "HUD",
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/Factory.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/HUD.luau"
                           ]
                         },
                         {
@@ -139,7 +139,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/GeometryMode.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/GeometryMode.luau"
                           ]
                         },
                         {
@@ -147,7 +147,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/HandleManager.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/HandleManager.luau"
                           ]
                         },
                         {
@@ -155,7 +155,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/History.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/History.luau"
                           ]
                         },
                         {
@@ -163,7 +163,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/Hotkeys.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/Hotkeys.luau"
                           ]
                         },
                         {
@@ -171,7 +171,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/NoticePanel.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/NoticePanel.luau"
                           ]
                         },
                         {
@@ -179,7 +179,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/ProxyManager.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/ProxyManager.luau"
                           ]
                         },
                         {
@@ -187,7 +187,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/RibbonToolManager.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/RibbonToolManager.luau"
                           ]
                         },
                         {
@@ -195,7 +195,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/Selection.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/Selection.luau"
                           ]
                         },
                         {
@@ -203,7 +203,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/UIConfig.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/UIConfig.luau"
                           ]
                         },
                         {
@@ -211,7 +211,7 @@
                           "className": "ModuleScript",
                           "pluginManaged": true,
                           "filePaths": [
-                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/HUD/UserConfig.luau"
+                            "c:/Roblox Projects/MPE_ROOT_DONTCHANGE/Meshie/src/Core/UserConfig.luau"
                           ]
                         }
                       ]

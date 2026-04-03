@@ -1,11 +1,8 @@
 -- Selection.luau
 -- Custom mouse picking and hover highlight for Meshie.
--- Raycasts EditableMesh:RaycastLocal() to bypass CollisionFidelity issues
--- with proxy parts. Resolves hits to bm elements and force-selects the
--- corresponding proxy via SelectionManager.
---
--- Init(plugin) must be called from Loader.plugin.luau (same pattern as
--- RibbonToolManager) since plugin is only a global there.
+-- Raycasts EditableMesh:RaycastLocal() to resolve hits to bm elements
+-- and force-selects the corresponding proxy via SelectionManager.
+-- Uses UserInputService for mouse input (fires everywhere, not just over 3D objects).
 
 local UserInputService = game:GetService("UserInputService")
 local SelectionManager = require(script.Parent.Parent.SelectionManager)
@@ -13,21 +10,19 @@ local Input = require(script.Parent.Parent.Input)
 
 local Selection = {}
 
-local plugin = nil
 local rmesh = nil
 local pm = nil
 local getMode = nil -- () → "Vertex" | "Edge" | "Face"
 local paused = false
 local hoverHL = nil -- single Highlight instance, Adornee swapped per hover
 local emToVert = {} -- emId → bm vert reverse map
-local mouse = nil -- PluginMouse, obtained after Activate
 local moveConn = nil
 local clickConn = nil
 
 -- ─── Init ────────────────────────────────────────────────────────────────────
 
-function Selection.Init(p)
-	plugin = p
+function Selection.Init(_p)
+	-- plugin no longer needed; input handled via UserInputService
 end
 
 -- ─── Reverse map ─────────────────────────────────────────────────────────────
@@ -80,59 +75,31 @@ end
 
 -- ─── EM raycast ───────────────────────────────────────────────────────────────
 
-local function pick()
-	if not rmesh or not rmesh.em or not rmesh.meshPart then
-		return nil
-	end
+-- Pixel offsets for fallback ring (6 samples at ~12px radius)
+local PICK_OFFSETS = {
+	Vector2.new(0, 0),
+	Vector2.new(24, 0),
+	Vector2.new(-24, 0),
+	Vector2.new(0, 24),
+	Vector2.new(0, -24),
+	Vector2.new(16, 16),
+	Vector2.new(-16, -16),
+}
 
-	local mousePos = UserInputService:GetMouseLocation()
-	local camera = workspace.CurrentCamera
-	local ray = camera:ViewportPointToRay(mousePos.X, mousePos.Y)
-
-	local cf = rmesh.meshPart.CFrame
-	local sf = rmesh:GetScaleFactor()
-	local localOrigin = cf:PointToObjectSpace(ray.Origin) / sf
-	local localDir = cf:VectorToObjectSpace(ray.Direction) / sf
-
-	local faceId, hitPoint, bary = rmesh.em:RaycastLocal(localOrigin, localDir * 5000)
-	if not faceId then
-		return nil
-	end
-
+local function resolveHit(faceId, hitPoint, bary)
 	local emVerts = rmesh.em:GetFaceVertices(faceId)
-	if not emVerts or #emVerts < 3 then
-		print("[Selection] pick: faceId", faceId, "has fewer than 3 em verts")
-		return nil
-	end
+	if not emVerts or #emVerts < 3 then return nil end
 
 	local bv1 = emToVert[emVerts[1]]
 	local bv2 = emToVert[emVerts[2]]
 	local bv3 = emToVert[emVerts[3]]
-	if not bv1 or not bv2 or not bv3 then
-		print(
-			"[Selection] pick: emId→bm lookup failed for face",
-			faceId,
-			"emVerts:",
-			emVerts[1],
-			emVerts[2],
-			emVerts[3],
-			"→ bv:",
-			bv1 ~= nil,
-			bv2 ~= nil,
-			bv3 ~= nil
-		)
-		return nil
-	end
+	if not bv1 or not bv2 or not bv3 then return nil end
 
 	local mode = getMode()
 
 	if mode == "Face" then
 		local face = findFaceContaining(rmesh.bm, bv1, bv2, bv3)
-		if face then
-			print("[Selection] pick: Face hit →", face.id)
-			return pm:findProxy("Face", face.id)
-		end
-		print("[Selection] pick: Face mode — no bm face found for hit triangle")
+		if face then return pm:findProxy("Face", face.id) end
 	elseif mode == "Edge" then
 		local candidates = {
 			findEdgeBetween(rmesh.bm, bv1, bv2),
@@ -151,11 +118,7 @@ local function pick()
 				end
 			end
 		end
-		if bestEdge then
-			print("[Selection] pick: Edge hit →", bestEdge.id, "(dist", bestDist, ")")
-			return pm:findProxy("Edge", bestEdge.id)
-		end
-		print("[Selection] pick: Edge mode — no candidate edge found")
+		if bestEdge then return pm:findProxy("Edge", bestEdge.id) end
 	elseif mode == "Vertex" then
 		local bestVert
 		if bary.X >= bary.Y and bary.X >= bary.Z then
@@ -165,9 +128,31 @@ local function pick()
 		else
 			bestVert = bv3
 		end
-		if bestVert then
-			print("[Selection] pick: Vertex hit →", bestVert.id, "(bary", bary, ")")
-			return pm:findProxy("Vertex", bestVert.id)
+		if bestVert then return pm:findProxy("Vertex", bestVert.id) end
+	end
+
+	return nil
+end
+
+local function pick()
+	if not rmesh or not rmesh.em or not rmesh.meshPart then
+		return nil
+	end
+
+	local mousePos = UserInputService:GetMouseLocation()
+	local camera = workspace.CurrentCamera
+	local cf = rmesh.meshPart.CFrame
+	local sf = rmesh:GetScaleFactor()
+
+	for _, offset in ipairs(PICK_OFFSETS) do
+		local ray = camera:ViewportPointToRay(mousePos.X + offset.X, mousePos.Y + offset.Y)
+		local localOrigin = cf:PointToObjectSpace(ray.Origin) / sf
+		local localDir = cf:VectorToObjectSpace(ray.Direction) / sf
+
+		local faceId, hitPoint, bary = rmesh.em:RaycastLocal(localOrigin, localDir * 5000)
+		if faceId then
+			local result = resolveHit(faceId, hitPoint, bary)
+			if result then return result end
 		end
 	end
 
@@ -206,7 +191,7 @@ end
 
 -- ─── Lifecycle ────────────────────────────────────────────────────────────────
 
-function Selection.Start(r, p, modeGetter)
+function Selection.Start(r, p, modeGetter, parentFolder)
 	rmesh = r
 	pm = p
 	getMode = modeGetter
@@ -218,14 +203,19 @@ function Selection.Start(r, p, modeGetter)
 	hoverHL.FillTransparency = 1
 	hoverHL.OutlineColor = Color3.fromRGB(255, 255, 255)
 	hoverHL.Adornee = nil
-	hoverHL.Parent = workspace
+	hoverHL.Parent = parentFolder or workspace
 
-	if plugin then
-		plugin:Activate(true)
-		mouse = plugin:GetMouse()
-		moveConn = mouse.Move:Connect(updateHover)
-		clickConn = mouse.Button1Down:Connect(onClick)
-	end
+	moveConn = UserInputService.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			updateHover()
+		end
+	end)
+	clickConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			onClick()
+		end
+	end)
 
 	print("[Selection] Started")
 end
@@ -239,17 +229,11 @@ function Selection.Pause()
 	if hoverHL then
 		hoverHL.Enabled = false
 	end
-	if plugin then
-		plugin:Deactivate()
-	end
 	print("[Selection] Paused")
 end
 
 function Selection.Resume()
 	paused = false
-	if plugin then
-		plugin:Activate(true)
-	end
 	print("[Selection] Resumed")
 end
 
@@ -266,10 +250,6 @@ function Selection.Stop()
 		hoverHL:Destroy()
 		hoverHL = nil
 	end
-	if plugin then
-		plugin:Deactivate()
-	end
-	mouse = nil
 	rmesh = nil
 	pm = nil
 	getMode = nil

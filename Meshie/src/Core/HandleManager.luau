@@ -12,12 +12,12 @@ local onChanged    = nil
 -- ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 -- Create the handle folder. Call at session start.
-function HandleManager.Begin()
+function HandleManager.Begin(parentFolder)
 	if folder then folder:Destroy() end
 	folder            = Instance.new("Folder")
 	folder.Name       = "ToolHandles"
 	folder.Archivable = false
-	folder.Parent     = workspace
+	folder.Parent     = parentFolder or workspace
 end
 
 -- Set the callback fired on every handle CFrame/Size change.

@@ -1,14 +1,14 @@
 -- Meshie.plugin.luau
 -- Thin bootstrap. Passes the plugin global to HUD, handles unloading.
 
-local HUD         = require(script.Parent.HUD)
+local Core        = require(script.Parent.Core)
 local Version     = require(script.Parent.Version)
-local NoticePanel = require(script.Parent.HUD.NoticePanel)
+local NoticePanel = require(script.Parent.Core.NoticePanel)
 
-HUD.Init(plugin)
+Core.Init(plugin)
 
 plugin.Unloading:Connect(function()
-	HUD.Shutdown()
+	Core.Shutdown()
 end)
 
 local noticedVersion = plugin:GetSetting("MeshieNoticedVersion")
